@@ -4,6 +4,7 @@ import dev.kizuna.meridian.protocol.pb.BodyMessages.Realm;
 import dev.kizuna.meridian.technique.protocol.pb.TechniqueMessages.ArmSelection;
 import dev.kizuna.meridian.technique.protocol.pb.TechniqueMessages.BlockWork;
 import dev.kizuna.meridian.technique.protocol.pb.TechniqueMessages.Category;
+import dev.kizuna.meridian.technique.protocol.pb.TechniqueMessages.Grapple;
 import dev.kizuna.meridian.technique.protocol.pb.TechniqueMessages.LegKnockbackKind;
 import dev.kizuna.meridian.technique.protocol.pb.TechniqueMessages.LimbStrike;
 import dev.kizuna.meridian.technique.protocol.pb.TechniqueMessages.ModuleKind;
@@ -11,6 +12,7 @@ import dev.kizuna.meridian.technique.protocol.pb.TechniqueMessages.ScrollDrop;
 import dev.kizuna.meridian.technique.protocol.pb.TechniqueMessages.TechniqueDefinition;
 import dev.kizuna.meridian.technique.protocol.pb.TechniqueMessages.TechniqueEffect;
 import dev.kizuna.meridian.technique.protocol.pb.TechniqueMessages.TechniqueSlot;
+import dev.kizuna.meridian.technique.protocol.pb.TechniqueMessages.Throw;
 import dev.kizuna.meridian.technique.protocol.pb.TechniqueMessages.WorkCost;
 import dev.kizuna.meridian.technique.server.TechniqueRegistry;
 import org.junit.Test;
@@ -18,6 +20,7 @@ import org.junit.Test;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Predicate;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -29,8 +32,29 @@ public final class VillagerFistCatalogTest {
     private static final String OUTER = "meridian_villager:outer";
     private static final String CRUSHING_FIST = "meridian_villager:crushing_fist";
     private static final String GOLEM_LIFT = "meridian_villager:golem_lift";
+    private static final String SHOULDER_THROW = "meridian_villager:shoulder_throw";
     private static final String DUMMY_DRILL = "meridian_villager:dummy_drill";
-    private static final List<String> OUTER_TECHNIQUES = List.of(CRUSHING_FIST, GOLEM_LIFT, DUMMY_DRILL);
+    private static final List<String> OUTER_TECHNIQUES = List.of(CRUSHING_FIST, GOLEM_LIFT, SHOULDER_THROW,
+            DUMMY_DRILL);
+    private static final String GRAPPLE_PROCESSOR = "meridian_villager:grapple";
+    private static final String THROW_TYPE = "meridian_villager:throw";
+    private static final long GRAPPLE_MILLIS = 1_200;
+    private static final long THROW_MILLIS = 2_200;
+    private static final long THROW_ACTIVE_MILLIS = 1_400;
+    private static final long THROW_RECOVERY_MILLIS = 3_400;
+    private static final long THROW_COOLDOWN_MILLIS = 5_000;
+    private static final long HOLD_MILLIS = 1_000;
+    private static final long LEAN_DELAY_MILLIS = 300;
+    private static final long FLIGHT_MILLIS = 400;
+    private static final long DOWN_MILLIS = 1_500;
+    private static final long DOWN_IMMUNITY_MILLIS = 3_000;
+    private static final double GRAPPLE_REACH = 2;
+    private static final double HOLD_DISTANCE = 1;
+    private static final double LANDING_DISTANCE = 2;
+    private static final double APEX_HEIGHT = 0.5;
+    private static final double THROW_MULTIPLIER = 2;
+    private static final double LEAN_MULTIPLIER = 0.4;
+    private static final double LEAN_PUSH = 1;
     private static final double SCROLL_CHANCE = 0.25;
     private static final int ARM_MUSCLES = 6;
     private static final int LEG_MUSCLES = 6;
@@ -62,7 +86,7 @@ public final class VillagerFistCatalogTest {
 
     @Test
     public void catalogRegistersOneBookWithTheOuterVolume() throws IOException {
-        // 一书一卷三式；上卷没有前置卷，生成卷轴并由村民掉落。
+        // 一书一卷：三式打人加打木桩；上卷没有前置卷，生成卷轴并由村民掉落。
         TechniqueRegistry registry = VillagerFistContent.registry();
         assertEquals(1, registry.books().size());
         assertEquals(BOOK, registry.books().getFirst().getId());
@@ -135,6 +159,40 @@ public final class VillagerFistCatalogTest {
     }
 
     @Test
+    public void shoulderThrowGrabsAtWarmupEndAndThrowsBehind() throws IOException {
+        // 背摔：1.20 擒（2 格、拉到 1 格、擒 1 s，摔不动 0.3 s 后一靠 ×0.4 推开 1.0）；
+        // 2.20 抛 0.4 s 落身后 2 格，×2.0，倒地 1.5 s，起来后 3 s 免摔。
+        TechniqueDefinition definition = VillagerFistContent.registry().findLatest(SHOULDER_THROW).orElseThrow();
+        assertEquals(GRAPPLE_MILLIS, definition.getPhases().getWarmupMillis());
+        assertEquals(THROW_ACTIVE_MILLIS, definition.getPhases().getActiveMillis());
+        assertEquals(THROW_RECOVERY_MILLIS, definition.getPhases().getRecoveryMillis());
+        assertEquals(THROW_COOLDOWN_MILLIS, definition.getCooldownMillis());
+        assertTrue(definition.getPhases().getInterruptibleByDamage());
+        TechniqueEffect grab = only(definition, TechniqueEffect::hasGrapple);
+        assertEquals(GRAPPLE_MILLIS, grab.getAtMillis());
+        Grapple grapple = grab.getGrapple();
+        assertEquals(GRAPPLE_PROCESSOR, grapple.getProcessorId());
+        assertEquals(GRAPPLE_REACH, grapple.getMaximumDistance().getValue(), TOLERANCE);
+        assertEquals(HOLD_DISTANCE, grapple.getHoldDistance().getValue(), TOLERANCE);
+        assertEquals(HOLD_MILLIS, grapple.getDurationMillis());
+        assertEquals(LEAN_DELAY_MILLIS, grapple.getLean().getDelayMillis());
+        assertEquals(THROW_TYPE, grapple.getLean().getDamageTypeId());
+        assertEquals(LEAN_MULTIPLIER, grapple.getLean().getMultiplier().getValue(), TOLERANCE);
+        assertEquals(LEAN_PUSH, grapple.getLean().getPush().getValue(), TOLERANCE);
+        TechniqueEffect tossed = only(definition, TechniqueEffect::hasThrow);
+        assertEquals(THROW_MILLIS, tossed.getAtMillis());
+        Throw toss = tossed.getThrow();
+        assertEquals(GRAPPLE_PROCESSOR, toss.getProcessorId());
+        assertEquals(FLIGHT_MILLIS, toss.getFlightMillis());
+        assertEquals(LANDING_DISTANCE, toss.getLandingDistance().getValue(), TOLERANCE);
+        assertEquals(APEX_HEIGHT, toss.getApexHeight().getValue(), TOLERANCE);
+        assertEquals(THROW_TYPE, toss.getDamageTypeId());
+        assertEquals(THROW_MULTIPLIER, toss.getMultiplier().getValue(), TOLERANCE);
+        assertEquals(DOWN_MILLIS, toss.getDownMillis());
+        assertEquals(DOWN_IMMUNITY_MILLIS, toss.getDownImmunityMillis());
+    }
+
+    @Test
     public void dummyDrillTrainsArmsAgainstAPostForThirtySeconds() throws IOException {
         // 打木桩：站定、修炼类、AI 权重 0；1.0 s 起每 0.5 s 一次木桩事件共 30 s，五笔 6 s 训练做功。
         TechniqueDefinition drill = VillagerFistContent.registry().findLatest(DUMMY_DRILL).orElseThrow();
@@ -181,5 +239,12 @@ public final class VillagerFistCatalogTest {
         assertEquals(List.of(tag), slot.getTagsList());
         assertEquals(count, slot.getMinimumCount());
         assertEquals(count, slot.getMaximumCount());
+    }
+
+    private static TechniqueEffect only(TechniqueDefinition definition, Predicate<TechniqueEffect> kind) {
+        // 这一式里这类效果恰好一个。
+        List<TechniqueEffect> found = definition.getEffectsList().stream().filter(kind).toList();
+        assertEquals(1, found.size());
+        return found.getFirst();
     }
 }

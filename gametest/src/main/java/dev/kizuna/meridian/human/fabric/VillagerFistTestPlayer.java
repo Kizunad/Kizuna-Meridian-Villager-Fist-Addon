@@ -46,6 +46,7 @@ final class VillagerFistTestPlayer implements AutoCloseable {
     static final int CENTER = 4;
     static final int HEIGHT = 2;
     private static final String NAME = "fist_test";
+    private static final float FACING_SOUTH = 0;
     private static final String ARM_MUSCLE = "human:arm_muscle";
     private static final List<Identifier> CHANNELS = List.of(
             Identifier.parse("meridian:body_view"),
@@ -68,17 +69,22 @@ final class VillagerFistTestPlayer implements AutoCloseable {
     }
 
     VillagerFistTestPlayer(GameTestHelper context) {
-        // 只替换传输层；玩家列表、Human 登录与 Fabric 网络事件都用正式实现。
+        // 默认站在结构中心朝 +z。
+        this(context, NAME, Vec3.atBottomCenterOf(new BlockPos(CENTER, HEIGHT, CENTER)), FACING_SOUTH);
+    }
+
+    VillagerFistTestPlayer(GameTestHelper context, String name, Vec3 relativeFeet, float yaw) {
+        // 只替换传输层；玩家列表、Human 登录与 Fabric 网络事件都用正式实现。第二个玩家换名字、站位和朝向。
         listen();
         this.context = context;
-        player = TestPlayers.detached(context.getLevel(), NAME);
+        player = TestPlayers.detached(context.getLevel(), name);
         connection = new RecordingConnection(CHANNELS);
         ONLINE.put(player.getUUID(), this);
         TestPlayers.logIn(player, connection);
         player.setGameMode(GameType.SURVIVAL);
         player.setNoGravity(true /* noGravity */);
-        Vec3 position = Vec3.atBottomCenterOf(context.absolutePos(new BlockPos(CENTER, HEIGHT, CENTER)));
-        player.snapTo(position.x, position.y, position.z, 0, 0);
+        Vec3 position = context.absoluteVec(relativeFeet);
+        player.snapTo(position.x, position.y, position.z, yaw, 0);
         player.setOnGround(true /* onGround */);
         prepareBody();
     }
@@ -89,7 +95,7 @@ final class VillagerFistTestPlayer implements AutoCloseable {
         context.assertTrue(outcome.getPhase() == CastPhase.WARMUP, label + "起式失败：" + outcome);
     }
 
-    private CastOutcome cast(String techniqueId) {
+    CastOutcome cast(String techniqueId) {
         // 学习和施放都引用正式目录；施放 ID 每次随机，按式记下，并行用例的结束事件不会串。
         var service = TechniqueFabric.service();
         var definition = service.registry().findLatest(techniqueId).orElseThrow();

@@ -3,6 +3,7 @@
   "entity.meridian_villager.villager.fist_master": "Fist Master",
   "itemGroup.meridian_villager.villager_fist": "Sleeve Fist",
   "message.meridian_villager.dummy_drill.no_target": "Face a training post to drill",
+  "message.meridian_villager.grapple.too_heavy": "Too heavy to throw",
   "commands.meridian_villager.target.block": "Facing post: %s (%s, %s, %s)",
   "commands.meridian_villager.target.entity": "Facing post: %s",
   "commands.meridian_villager.target.none": "No training post in front of you",
@@ -14,6 +15,8 @@
   "technique.meridian_villager.crushing_fist.note": "a rear-hand punch straight to the chest that drives the foe back",
   "technique.meridian_villager.golem_lift": "Golem Lift",
   "technique.meridian_villager.golem_lift.note": "both arms swing upward and heave the foe off the ground",
+  "technique.meridian_villager.shoulder_throw": "Shoulder Throw",
+  "technique.meridian_villager.shoulder_throw.note": "seize the foe, turn, and heave them over the shoulder to land behind you",
   "technique.meridian_villager.dummy_drill": "Dummy Drill",
   "technique.meridian_villager.dummy_drill.note": "strike a wooden dummy, log, hay bale or dummy figure; the arms grow tireless"
 }

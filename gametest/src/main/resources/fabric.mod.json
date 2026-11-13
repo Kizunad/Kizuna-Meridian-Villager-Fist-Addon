@@ -8,7 +8,9 @@
     "fabric-gametest": [
       "dev.kizuna.meridian.human.fabric.VillagerFistDrillGameTest",
       "dev.kizuna.meridian.human.fabric.VillagerFistStrikeGameTest",
-      "dev.kizuna.meridian.human.fabric.FistMasterGameTest"
+      "dev.kizuna.meridian.human.fabric.FistMasterGameTest",
+      "dev.kizuna.meridian.human.fabric.VillagerFistThrowGameTest",
+      "dev.kizuna.meridian.human.fabric.VillagerFistHoldGameTest"
     ]
   },
   "custom": {

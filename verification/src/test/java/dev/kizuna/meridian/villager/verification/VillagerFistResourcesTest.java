@@ -32,6 +32,11 @@ public final class VillagerFistResourcesTest {
     private static final List<String> STRIKE_TAGS = List.of("kind/blunt", "melee", "aim/torso");
     private static final String TWO_HANDED_TAG = "two_handed";
     private static final String BOTH_ARMS_TYPE = PREFIX + "fist_both_torso";
+    /** 背摔落地和一靠：双手、打躯干。 */
+    private static final String THROW_TYPE = PREFIX + "throw";
+    private static final Set<String> UNTHROWABLE = Set.of("minecraft:iron_golem", "minecraft:ravager",
+            "minecraft:warden", "minecraft:wither", "minecraft:ender_dragon", "minecraft:elder_guardian",
+            "minecraft:creaking");
     private static final Set<String> DRILL_BLOCKS = Set.of(PREFIX + "wooden_dummy", "#minecraft:logs",
             "minecraft:hay_block");
     private static final Set<String> DRILL_ENTITIES = Set.of("minecraft:armor_stand", "minecraft:mannequin",
@@ -53,16 +58,26 @@ public final class VillagerFistResourcesTest {
 
     @Test
     public void catalogDamageTypesAreRegisteredAndTagged() throws IOException {
-        // 目录引用的每个伤害类型在本仓注册，进钝击、近战、躯干标签；只有双手那个进 two_handed。
+        // 目录引用的每个伤害类型在本仓注册，进钝击、近战、躯干标签；双手出拳和背摔进 two_handed。
+        // 背摔落地砸在原地，原版受伤时的击退不要（一靠的推开另走 knockback），所以只有它进原版 no_knockback。
         Set<String> used = damageTypes(VillagerFistContent.catalog());
-        assertEquals(Set.of(PREFIX + "fist_rear_torso", BOTH_ARMS_TYPE), used);
+        assertEquals(Set.of(PREFIX + "fist_rear_torso", BOTH_ARMS_TYPE, THROW_TYPE), used);
         for (String type : used) {
             assertTrue(type, Files.isRegularFile(resource(DATA + "damage_type/" + local(type) + ".json")));
             for (String tag : STRIKE_TAGS) {
                 assertTrue(type + " 缺 " + tag, damageTag(tag).contains(type));
             }
         }
-        assertEquals(Set.of(BOTH_ARMS_TYPE), damageTag(TWO_HANDED_TAG));
+        assertEquals(Set.of(BOTH_ARMS_TYPE, THROW_TYPE), damageTag(TWO_HANDED_TAG));
+        JsonObject noKnockback = json("data/minecraft/tags/damage_type/no_knockback.json");
+        assertFalse(noKnockback.get("replace").getAsBoolean());
+        assertEquals(Set.of(THROW_TYPE), values(noKnockback));
+    }
+
+    @Test
+    public void unthrowableTagListsTheHeavyMobsFromTheSpec() throws IOException {
+        // 摔不动的默认名单：铁傀儡、劫掠兽、监守者、凋灵、末影龙、远古守卫者、嘎枝。
+        assertEquals(UNTHROWABLE, tagValues(DATA + "tags/entity_type/unthrowable.json"));
     }
 
     @Test
@@ -92,12 +107,22 @@ public final class VillagerFistResourcesTest {
     }
 
     private static Set<String> damageTypes(TechniqueCatalog catalog) {
-        // 收集所有肢击引用的伤害类型。
+        // 收集肢击、一靠、背摔落地引用的伤害类型。
         return catalog.getDefinitionsList().stream()
                 .flatMap(definition -> definition.getEffectsList().stream())
-                .filter(TechniqueEffect::hasLimbStrike)
-                .map(effect -> effect.getLimbStrike().getDamageTypeId())
+                .map(VillagerFistResourcesTest::damageType)
+                .filter(type -> !type.isEmpty())
                 .collect(Collectors.toCollection(TreeSet::new));
+    }
+
+    private static String damageType(TechniqueEffect effect) {
+        // 不带伤害的效果返回空串。
+        return switch (effect.getOperationCase()) {
+            case LIMB_STRIKE -> effect.getLimbStrike().getDamageTypeId();
+            case GRAPPLE -> effect.getGrapple().getLean().getDamageTypeId();
+            case THROW -> effect.getThrow().getDamageTypeId();
+            default -> "";
+        };
     }
 
     private static Set<String> damageTag(String tag) throws IOException {

@@ -15,11 +15,8 @@ import java.util.Set;
 import java.util.UUID;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
 import net.minecraft.network.chat.Component;
-import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.tags.TagKey;
-import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.level.block.Block;
 
@@ -36,7 +33,6 @@ public final class DummyDrills {
     static final String CASTER_MISSING = "打木桩的人不在当前服务器";
     private static final Map<CastKey, DrillTarget> locked = new HashMap<>();
     private static final Map<CastKey, Set<String>> handled = new HashMap<>();
-    private static MinecraftServer server;
 
     private DummyDrills() {
         // 状态按施放保存，随施放结束和服务器停止释放。
@@ -44,7 +40,6 @@ public final class DummyDrills {
 
     static void register() {
         // 处理器只认本仓的处理器 ID，其余 block_work 交给别的附属。
-        ServerLifecycleEvents.SERVER_STARTED.register(started -> server = started);
         ServerLifecycleEvents.SERVER_STOPPED.register(stopped -> clear());
         TechniqueFabric.EFFECT_HANDLER.register(DummyDrills::handle);
         TechniqueFabric.CAST_ENDED.register(DummyDrills::release);
@@ -60,7 +55,7 @@ public final class DummyDrills {
         if (handled.getOrDefault(key, Set.of()).contains(intent.getEffectId())) {
             return EffectHandling.handled();
         }
-        LivingEntity caster = caster(event.entityUuid());
+        LivingEntity caster = ServerEntities.living(event.entityUuid());
         if (caster == null) {
             return EffectHandling.rejected(CASTER_MISSING);
         }
@@ -102,20 +97,6 @@ public final class DummyDrills {
         return EffectHandling.handled();
     }
 
-    private static LivingEntity caster(UUID entityUuid) {
-        // 施放者可能是玩家，也可能是任何维度里的类人生物。
-        if (server == null) {
-            return null;
-        }
-        for (ServerLevel level : server.getAllLevels()) {
-            Entity entity = level.getEntity(entityUuid);
-            if (entity instanceof LivingEntity living) {
-                return living;
-            }
-        }
-        return null;
-    }
-
     private static void release(TechniqueCastEnded event) {
         // 施放结束（打完、被打断、被拒绝）都释放这根桩。
         CastKey key = new CastKey(event.entityUuid(), event.castId());
@@ -127,7 +108,6 @@ public final class DummyDrills {
         // 服务器停止时丢掉所有施放状态。
         locked.clear();
         handled.clear();
-        server = null;
     }
 
     /** 一次施放：施放者 UUID 加施放 ID。 */

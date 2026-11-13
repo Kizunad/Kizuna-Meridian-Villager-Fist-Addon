@@ -3,7 +3,7 @@ package dev.kizuna.meridian.villager.fabric;
 import net.fabricmc.api.ModInitializer;
 import net.minecraft.resources.Identifier;
 
-/** 袖手拳 26.2 Fabric 入口：木人桩、拳师职业、打木桩处理器、创造栏与调试指令。 */
+/** 袖手拳 26.2 Fabric 入口：木人桩、拳师职业、打木桩与擒摔处理器、创造栏与调试指令。 */
 public final class VillagerFistFabric implements ModInitializer {
     public static final String MOD_ID = "meridian_villager";
 
@@ -13,7 +13,9 @@ public final class VillagerFistFabric implements ModInitializer {
         VillagerFistBlocks.register();
         FistMasterProfession.register();
         VillagerFistCreativeTab.register();
+        ServerEntities.register();
         DummyDrills.register();
+        Grapples.register();
         VillagerFistCommands.register();
     }
 

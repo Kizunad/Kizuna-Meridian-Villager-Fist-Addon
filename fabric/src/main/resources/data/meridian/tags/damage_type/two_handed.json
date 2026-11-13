@@ -1,6 +1,7 @@
 {
   "replace": false,
   "values": [
-    "meridian_villager:fist_both_torso"
+    "meridian_villager:fist_both_torso",
+    "meridian_villager:throw"
   ]
 }

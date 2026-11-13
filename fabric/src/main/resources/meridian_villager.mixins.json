@@ -4,6 +4,7 @@
   "package": "dev.kizuna.meridian.villager.fabric.mixin",
   "compatibilityLevel": "JAVA_25",
   "mixins": [
+    "MobGrappleLockMixin",
     "VillagerGoalPackagesMixin"
   ],
   "injectors": {

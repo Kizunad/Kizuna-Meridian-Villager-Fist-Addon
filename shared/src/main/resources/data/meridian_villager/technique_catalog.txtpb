@@ -1,5 +1,5 @@
 # 袖手拳功法目录，schema_version 同时标识清单格式。
-# 目前只有上卷外家：崩拳、撩天两式打人，打木桩练两臂耐力；中卷、下卷等各自的式做好再加卷。
+# 目前只有上卷外家：崩拳、撩天、背摔三式打人，打木桩练两臂耐力；中卷、下卷等各自的式做好再加卷。
 schema_version: 1
 namespace: "meridian_villager"
 binding_templates { id: "human:adult" version: 1 }
@@ -20,6 +20,7 @@ volumes {
   display_name: "袖手拳·上卷·外家"
   techniques { id: "meridian_villager:crushing_fist" version: 1 }
   techniques { id: "meridian_villager:golem_lift" version: 1 }
+  techniques { id: "meridian_villager:shoulder_throw" version: 1 }
   techniques { id: "meridian_villager:dummy_drill" version: 1 }
   scroll_drops { entity_type: "minecraft:villager" chance: 0.25 }
 }
@@ -197,6 +198,85 @@ definitions {
       start_millis: 400
     }
   }
+}
+
+definitions {
+  id: "meridian_villager:shoulder_throw"
+  version: 1
+  ai_hints {
+    minimum_distance { value: 0 unit: METER }
+    maximum_distance { value: 2 unit: METER }
+    maximum_hp_ratio { value: 1 unit: RATIO }
+    minimum_qi_ratio { value: 0 unit: RATIO }
+    category_weight { value: 1 unit: RATIO }
+  }
+  category: ATTACK
+  minimum_realm: WANDERING_QI
+  slots {
+    id: "hand_meridians" module: MERIDIAN tags: "human:hand_meridian"
+    minimum_count: 1 maximum_count: 6 require_opened: true
+  }
+  slots { id: "arm_muscles" module: TISSUE tags: "human:arm_muscle" minimum_count: 6 maximum_count: 6 }
+  slots { id: "leg_muscles" module: TISSUE tags: "human:leg_muscle" minimum_count: 6 maximum_count: 6 }
+  cost {
+    qi {
+      slot_id: "hand_meridians"
+      matching: ANY_ATTRIBUTE_AT_LEAST_PHASE
+      phase: FREE
+      amount { value: 10 unit: QI }
+      distribution: EVEN
+    }
+    work {
+      slot_id: "arm_muscles" force { value: 0 unit: NEWTON }
+      power { value: 100 unit: WATT } duration { value: 1.4 unit: SECOND }
+    }
+    work {
+      slot_id: "leg_muscles" force { value: 0 unit: NEWTON }
+      power { value: 133.33 unit: WATT } duration { value: 1.4 unit: SECOND }
+    }
+  }
+  phases { warmup_millis: 1200 active_millis: 1400 recovery_millis: 3400 interruptible_by_damage: true }
+  cooldown_millis: 5000
+  effects {
+    at_millis: 0
+    presentation { id: "meridian_villager:villager_shoulder_throw" duration: UNTIL_RECOVERY_END start_millis: 0 }
+  }
+  # 1.20 擒：2 格内抓一个拉到身前 1 格，擒到 2.20；摔不动的不擒，1.50 一靠（×0.4，推开 1.0）。
+  effects {
+    at_millis: 1200
+    grapple {
+      processor_id: "meridian_villager:grapple"
+      maximum_distance { value: 2 unit: METER }
+      hold_distance { value: 1 unit: METER }
+      duration_millis: 1000
+      lean {
+        delay_millis: 300
+        damage_type_id: "meridian_villager:throw"
+        multiplier { value: 0.4 unit: RATIO }
+        push { value: 1 unit: RATIO }
+      }
+    }
+  }
+  # 2.20 抛：0.40 s 过头，最高比头顶高 0.5 格；2.60 落在身后 2 格，打躯干 ×2.0，倒地 1.5 s，起来后 3 s 不再被摔倒。
+  effects {
+    at_millis: 2200
+    throw {
+      processor_id: "meridian_villager:grapple"
+      flight_millis: 400
+      landing_distance { value: 2 unit: METER }
+      apex_height { value: 0.5 unit: METER }
+      damage_type_id: "meridian_villager:throw"
+      multiplier { value: 2 unit: RATIO }
+      down_millis: 1500
+      down_immunity_millis: 3000
+    }
+  }
+  presentation {
+    icon_id: "meridian_villager:shoulder_throw"
+    display_name: "背摔"
+    description: "老拳师说，人和麦捆一样，有个能扛的地方。抓住了，转身，矮下去，把他架上肩，剩下的交给他自己的分量。村里收麦的汉子学这一式最快，摔得也最响。"
+  }
+  movement_speed_multiplier: 0.4
 }
 
 definitions {
