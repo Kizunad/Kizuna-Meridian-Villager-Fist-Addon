@@ -1,0 +1,19 @@
+{
+  "block.meridian_villager.wooden_dummy": "木人桩",
+  "entity.meridian_villager.villager.fist_master": "拳师",
+  "itemGroup.meridian_villager.villager_fist": "袖手拳",
+  "message.meridian_villager.dummy_drill.no_target": "要对着木桩打",
+  "commands.meridian_villager.target.block": "对着桩：%s（%s, %s, %s）",
+  "commands.meridian_villager.target.entity": "对着桩：%s",
+  "commands.meridian_villager.target.none": "眼前没有桩",
+  "commands.meridian_villager.target.not_living": "只有活物能打桩",
+  "book.meridian_villager.sleeve_fist": "袖手拳",
+  "book.meridian_villager.sleeve_fist.note": "空着手、脚下站稳才出得了拳",
+  "volume.meridian_villager.outer": "外家",
+  "technique.meridian_villager.crushing_fist": "崩拳",
+  "technique.meridian_villager.crushing_fist.note": "后手一拳直送心口，把人往后打退",
+  "technique.meridian_villager.golem_lift": "撩天",
+  "technique.meridian_villager.golem_lift.note": "两臂往上一抡，把人掀离地面",
+  "technique.meridian_villager.dummy_drill": "打木桩",
+  "technique.meridian_villager.dummy_drill.note": "对着木人桩、原木、草垛或假人打，两臂越打越耐久"
+}

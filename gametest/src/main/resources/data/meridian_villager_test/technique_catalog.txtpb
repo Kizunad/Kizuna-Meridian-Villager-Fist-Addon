@@ -1,0 +1,36 @@
+# 测试用的劈柴：只供袖手拳 GameTest 看两门功法练到同一组手臂肌肉。
+# 起手第 0 ms 一笔 1 秒训练做功，和打木桩每笔同力同功率。
+schema_version: 1
+namespace: "meridian_villager_test"
+binding_templates { id: "human:adult" version: 1 }
+
+books {
+  id: "meridian_villager_test:chores"
+  display_name: "杂活"
+}
+
+volumes {
+  id: "meridian_villager_test:chopping"
+  book_id: "meridian_villager_test:chores"
+  display_name: "杂活·劈柴"
+  techniques { id: "meridian_villager_test:chop_wood" version: 1 }
+  scroll_item: false
+}
+
+definitions {
+  id: "meridian_villager_test:chop_wood"
+  version: 1
+  category: CULTIVATION
+  minimum_realm: WANDERING_QI
+  slots { id: "arm_muscles" module: TISSUE tags: "human:arm_muscle" minimum_count: 6 maximum_count: 6 }
+  cost {}
+  phases { warmup_millis: 1000 active_millis: 0 recovery_millis: 500 interruptible_by_damage: true }
+  cooldown_millis: 0
+  effects {
+    at_millis: 0
+    work {
+      slot_id: "arm_muscles" force { value: 80 unit: NEWTON }
+      power { value: 45 unit: WATT } duration { value: 1 unit: SECOND } training: true
+    }
+  }
+}

@@ -1,0 +1,37 @@
+plugins {
+    id 'net.fabricmc.fabric-loom'
+}
+
+description = '袖手拳的 26.2 Fabric 注册与世界接线：木人桩、拳师职业、打木桩处理器、拳师打桩行为。'
+
+dependencies {
+    minecraft libs.minecraft
+    implementation libs.fabric.loader
+    implementation libs.fabric.api
+    // 调试指令挂在 Framework 的 /meridian 注册点下。
+    implementation 'dev.kizuna.meridian:fabric'
+    implementation 'dev.kizuna.meridian.technique:fabric'
+    implementation 'dev.kizuna.meridian.technique:server'
+    implementation 'dev.kizuna.meridian.technique:shared'
+    // 拳师打桩动作由服务端经 PA Mobs 播放；PA Mobs 是硬依赖。
+    implementation 'dev.kizuna:kizuna-players-animation-mobs-addon'
+    include project(':shared')
+    testImplementation libs.junit4
+}
+
+test {
+    useJUnit()
+}
+
+processResources {
+    inputs.property 'version', project.version
+    filesMatching('fabric.mod.json') { expand version: project.version }
+    from(project(':shared').sourceSets.main.resources)
+}
+
+loom {
+    mods {
+        meridian_villager { sourceSet sourceSets.main }
+    }
+    runs { server { runDir 'build/server' } }
+}

@@ -1,0 +1,19 @@
+{
+  "variants": {
+    "facing=north": {
+      "model": "meridian_villager:block/wooden_dummy"
+    },
+    "facing=east": {
+      "model": "meridian_villager:block/wooden_dummy",
+      "y": 90
+    },
+    "facing=south": {
+      "model": "meridian_villager:block/wooden_dummy",
+      "y": 180
+    },
+    "facing=west": {
+      "model": "meridian_villager:block/wooden_dummy",
+      "y": 270
+    }
+  }
+}

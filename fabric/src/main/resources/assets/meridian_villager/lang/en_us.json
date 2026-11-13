@@ -1,0 +1,19 @@
+{
+  "block.meridian_villager.wooden_dummy": "Wooden Dummy",
+  "entity.meridian_villager.villager.fist_master": "Fist Master",
+  "itemGroup.meridian_villager.villager_fist": "Sleeve Fist",
+  "message.meridian_villager.dummy_drill.no_target": "Face a training post to drill",
+  "commands.meridian_villager.target.block": "Facing post: %s (%s, %s, %s)",
+  "commands.meridian_villager.target.entity": "Facing post: %s",
+  "commands.meridian_villager.target.none": "No training post in front of you",
+  "commands.meridian_villager.target.not_living": "Only living things can drill",
+  "book.meridian_villager.sleeve_fist": "Sleeve Fist",
+  "book.meridian_villager.sleeve_fist.note": "Bare hands, feet planted on the ground.",
+  "volume.meridian_villager.outer": "Outer Form",
+  "technique.meridian_villager.crushing_fist": "Crushing Fist",
+  "technique.meridian_villager.crushing_fist.note": "a rear-hand punch straight to the chest that drives the foe back",
+  "technique.meridian_villager.golem_lift": "Golem Lift",
+  "technique.meridian_villager.golem_lift.note": "both arms swing upward and heave the foe off the ground",
+  "technique.meridian_villager.dummy_drill": "Dummy Drill",
+  "technique.meridian_villager.dummy_drill.note": "strike a wooden dummy, log, hay bale or dummy figure; the arms grow tireless"
+}

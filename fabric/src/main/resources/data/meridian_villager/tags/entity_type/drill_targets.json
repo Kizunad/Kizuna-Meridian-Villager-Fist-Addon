@@ -1,0 +1,8 @@
+{
+  "replace": false,
+  "values": [
+    "minecraft:armor_stand",
+    "minecraft:mannequin",
+    "meridian_humanoid_dummy:dummy"
+  ]
+}

@@ -1,0 +1,273 @@
+# 袖手拳功法目录，schema_version 同时标识清单格式。
+# 目前只有上卷外家：崩拳、撩天两式打人，打木桩练两臂耐力；中卷、下卷等各自的式做好再加卷。
+schema_version: 1
+namespace: "meridian_villager"
+binding_templates { id: "human:adult" version: 1 }
+
+books {
+  id: "meridian_villager:sleeve_fist"
+  display_name: "袖手拳"
+  arm_rules {
+    ignore_held_items: true
+    require_grounded: true
+    base_damage { value: 1.5 unit: DAMAGE_POINT }
+  }
+}
+
+volumes {
+  id: "meridian_villager:outer"
+  book_id: "meridian_villager:sleeve_fist"
+  display_name: "袖手拳·上卷·外家"
+  techniques { id: "meridian_villager:crushing_fist" version: 1 }
+  techniques { id: "meridian_villager:golem_lift" version: 1 }
+  techniques { id: "meridian_villager:dummy_drill" version: 1 }
+  scroll_drops { entity_type: "minecraft:villager" chance: 0.25 }
+}
+
+definitions {
+  id: "meridian_villager:crushing_fist"
+  version: 1
+  ai_hints {
+    minimum_distance { value: 0 unit: METER }
+    maximum_distance { value: 2.5 unit: METER }
+    maximum_hp_ratio { value: 1 unit: RATIO }
+    minimum_qi_ratio { value: 0 unit: RATIO }
+    category_weight { value: 1 unit: RATIO }
+  }
+  category: ATTACK
+  minimum_realm: WANDERING_QI
+  slots {
+    id: "hand_meridians" module: MERIDIAN tags: "human:hand_meridian"
+    minimum_count: 1 maximum_count: 6 require_opened: true
+  }
+  slots { id: "arm_muscles" module: TISSUE tags: "human:arm_muscle" minimum_count: 6 maximum_count: 6 }
+  slots { id: "leg_muscles" module: TISSUE tags: "human:leg_muscle" minimum_count: 6 maximum_count: 6 }
+  cost {
+    qi {
+      slot_id: "hand_meridians"
+      matching: ANY_ATTRIBUTE_AT_LEAST_PHASE
+      phase: FREE
+      amount { value: 3 unit: QI }
+      distribution: EVEN
+    }
+    work {
+      slot_id: "arm_muscles" force { value: 0 unit: NEWTON }
+      power { value: 66.67 unit: WATT } duration { value: 0.3 unit: SECOND }
+    }
+    work {
+      slot_id: "leg_muscles" force { value: 0 unit: NEWTON }
+      power { value: 50 unit: WATT } duration { value: 0.3 unit: SECOND }
+    }
+  }
+  phases { warmup_millis: 1000 active_millis: 0 recovery_millis: 2000 interruptible_by_damage: false }
+  cooldown_millis: 1000
+  effects {
+    at_millis: 0
+    presentation { id: "meridian_villager:villager_crushing_fist" duration: UNTIL_RECOVERY_END start_millis: 0 }
+  }
+  effects { at_millis: 750 impulse { direction: FORWARD speed { value: 3 unit: METERS_PER_SECOND } } }
+  effects {
+    at_millis: 1000
+    limb_strike {
+      shape: SINGLE_TARGET
+      facing: STRIKE_FORWARD
+      distance { value: 2.5 unit: METER }
+      angle { value: 60 unit: DEGREE }
+      multiplier { value: 1.4 unit: RATIO }
+      maximum_targets: 1
+      cast_target_limit: 1
+      arm: REAR_ARM
+      damage_type_id: "meridian_villager:fist_rear_torso"
+      knockback_kind: PUSH
+      knockback { value: 0.6 unit: RATIO }
+      knockback_when_blocked: true
+      last_strike: true
+      dedup_group: "crushing_fist"
+    }
+  }
+  effects {
+    at_millis: 1000
+    sound {
+      sound_id: "minecraft:entity.player.attack.strong" anchor: TARGET
+      volume { value: 1 unit: RATIO } pitch { value: 0.9 unit: RATIO } pitch_jitter { value: 0.05 unit: RATIO }
+    }
+  }
+  presentation {
+    icon_id: "meridian_villager:crushing_fist"
+    display_name: "崩拳"
+    description: "村口的老拳师从不说这一拳叫什么，只叫徒弟跟着他的脚走：前脚蹭出去半步，后脚贴着地追上来，拳眼朝天从心口直直送出。徒弟们练了一冬，才听懂他那句“像弓弦崩断”的意思。"
+  }
+  movement_speed_multiplier: 0.4
+  follow_up {
+    transitions {
+      previous { id: "meridian_villager:golem_lift" version: 1 }
+      recovery_start_ratio { value: 0.5 unit: RATIO }
+      after_recovery_millis: 500
+      start_millis: 300
+    }
+  }
+}
+
+definitions {
+  id: "meridian_villager:golem_lift"
+  version: 1
+  ai_hints {
+    minimum_distance { value: 0 unit: METER }
+    maximum_distance { value: 2.5 unit: METER }
+    maximum_hp_ratio { value: 1 unit: RATIO }
+    minimum_qi_ratio { value: 0 unit: RATIO }
+    category_weight { value: 1 unit: RATIO }
+  }
+  category: ATTACK
+  minimum_realm: WANDERING_QI
+  slots {
+    id: "hand_meridians" module: MERIDIAN tags: "human:hand_meridian"
+    minimum_count: 1 maximum_count: 6 require_opened: true
+  }
+  slots { id: "arm_muscles" module: TISSUE tags: "human:arm_muscle" minimum_count: 6 maximum_count: 6 }
+  slots { id: "leg_muscles" module: TISSUE tags: "human:leg_muscle" minimum_count: 6 maximum_count: 6 }
+  cost {
+    qi {
+      slot_id: "hand_meridians"
+      matching: ANY_ATTRIBUTE_AT_LEAST_PHASE
+      phase: FREE
+      amount { value: 8 unit: QI }
+      distribution: EVEN
+    }
+    work {
+      slot_id: "arm_muscles" force { value: 0 unit: NEWTON }
+      power { value: 116.67 unit: WATT } duration { value: 0.4 unit: SECOND }
+    }
+    work {
+      slot_id: "leg_muscles" force { value: 0 unit: NEWTON }
+      power { value: 100 unit: WATT } duration { value: 0.4 unit: SECOND }
+    }
+  }
+  phases { warmup_millis: 1900 active_millis: 0 recovery_millis: 3100 interruptible_by_damage: true }
+  cooldown_millis: 4000
+  effects {
+    at_millis: 0
+    presentation { id: "meridian_villager:villager_golem_lift" duration: UNTIL_RECOVERY_END start_millis: 0 }
+  }
+  effects {
+    at_millis: 1900
+    limb_strike {
+      shape: SINGLE_TARGET
+      facing: STRIKE_FORWARD
+      distance { value: 2.5 unit: METER }
+      angle { value: 60 unit: DEGREE }
+      multiplier { value: 1.5 unit: RATIO }
+      maximum_targets: 1
+      cast_target_limit: 1
+      arm: BOTH_ARMS
+      damage_type_id: "meridian_villager:fist_both_torso"
+      knockback_kind: LIFT
+      knockback { value: 0.3 unit: RATIO }
+      lift_speed { value: 8 unit: METERS_PER_SECOND }
+      knockback_when_blocked: true
+      last_strike: true
+      dedup_group: "golem_lift"
+    }
+  }
+  effects {
+    at_millis: 1900
+    sound {
+      sound_id: "minecraft:entity.player.attack.strong" anchor: TARGET
+      volume { value: 1 unit: RATIO } pitch { value: 0.8 unit: RATIO } pitch_jitter { value: 0.05 unit: RATIO }
+    }
+  }
+  effects {
+    at_millis: 1900
+    sound {
+      sound_id: "minecraft:entity.iron_golem.attack" anchor: TARGET
+      volume { value: 1 unit: RATIO } pitch { value: 1 unit: RATIO } pitch_jitter { value: 0.05 unit: RATIO }
+    }
+  }
+  presentation {
+    icon_id: "meridian_villager:golem_lift"
+    display_name: "撩天"
+    description: "这一式是看铁傀儡守村看来的。那年掠夺者摸进村，傀儡两条胳膊垂到膝前，往上一抡，就把人掀过了屋檐。看热闹的村民里有一个从此天天对着草垛抡胳膊，后来村里再没人笑他。"
+  }
+  movement_speed_multiplier: 0.4
+  follow_up {
+    transitions {
+      previous { id: "meridian_villager:crushing_fist" version: 1 }
+      recovery_start_ratio { value: 0.5 unit: RATIO }
+      after_recovery_millis: 500
+      start_millis: 400
+    }
+  }
+}
+
+definitions {
+  id: "meridian_villager:dummy_drill"
+  version: 1
+  ai_hints {
+    minimum_distance { value: 0 unit: METER }
+    maximum_distance { value: 2 unit: METER }
+    maximum_hp_ratio { value: 1 unit: RATIO }
+    minimum_qi_ratio { value: 0 unit: RATIO }
+    category_weight { value: 0 unit: RATIO }
+  }
+  category: CULTIVATION
+  minimum_realm: WANDERING_QI
+  movement_speed_multiplier: 0
+  slots { id: "arm_muscles" module: TISSUE tags: "human:arm_muscle" minimum_count: 6 maximum_count: 6 }
+  cost {}
+  phases { warmup_millis: 31000 active_millis: 0 recovery_millis: 1000 interruptible_by_damage: true }
+  cooldown_millis: 43000
+  effects {
+    at_millis: 0
+    presentation { id: "meridian_villager:villager_dummy_drill" duration: UNTIL_RECOVERY_END start_millis: 0 }
+  }
+  effects {
+    at_millis: 1000
+    block_work {
+      processor_id: "meridian_villager:dummy_drill"
+      block_tags: "meridian_villager:drill_targets"
+      maximum_distance { value: 2 unit: METER }
+      interval_millis: 500
+      duration_millis: 30000
+    }
+  }
+  effects {
+    at_millis: 1000
+    work {
+      slot_id: "arm_muscles" force { value: 80 unit: NEWTON }
+      power { value: 45 unit: WATT } duration { value: 6 unit: SECOND } training: true
+    }
+  }
+  effects {
+    at_millis: 7000
+    work {
+      slot_id: "arm_muscles" force { value: 80 unit: NEWTON }
+      power { value: 45 unit: WATT } duration { value: 6 unit: SECOND } training: true
+    }
+  }
+  effects {
+    at_millis: 13000
+    work {
+      slot_id: "arm_muscles" force { value: 80 unit: NEWTON }
+      power { value: 45 unit: WATT } duration { value: 6 unit: SECOND } training: true
+    }
+  }
+  effects {
+    at_millis: 19000
+    work {
+      slot_id: "arm_muscles" force { value: 80 unit: NEWTON }
+      power { value: 45 unit: WATT } duration { value: 6 unit: SECOND } training: true
+    }
+  }
+  effects {
+    at_millis: 25000
+    work {
+      slot_id: "arm_muscles" force { value: 80 unit: NEWTON }
+      power { value: 45 unit: WATT } duration { value: 6 unit: SECOND } training: true
+    }
+  }
+  presentation {
+    icon_id: "meridian_villager:dummy_drill"
+    display_name: "打木桩"
+    description: "武馆院里那根木人桩，齐胸的那一截被拍得发亮，两只木臂磨细了一圈。弟子天不亮就来，拍一下、拦一下、打一下，一组接一组，打到太阳爬上院墙，胳膊才算是自己的。"
+  }
+}

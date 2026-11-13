@@ -1,0 +1,16 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    "#minecraft:logs",
+    "#minecraft:logs",
+    "#minecraft:logs",
+    "minecraft:stick",
+    "minecraft:stick",
+    "minecraft:stick"
+  ],
+  "result": {
+    "count": 1,
+    "id": "meridian_villager:wooden_dummy"
+  }
+}

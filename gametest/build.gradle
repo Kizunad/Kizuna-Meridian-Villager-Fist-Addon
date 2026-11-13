@@ -1,0 +1,56 @@
+plugins { id 'net.fabricmc.fabric-loom' }
+
+description = '袖手拳正式目录与 Human 玩家、原版村民大脑、PA Mobs 的整合 GameTest，正式包不含这里的代码。'
+def gametestRunDirectory = providers.gradleProperty('gametestRunDir').getOrElse('build/gametest')
+
+dependencies {
+    // 26.x 不混淆：直接用官方名编译，模组依赖也不经重映射。
+    minecraft libs.minecraft
+    implementation libs.fabric.loader
+    implementation libs.fabric.api
+    // 测试放在 Human 的 Fabric 包里，借用玩家身体的包内入口开脉、填真元、读手臂肌肉。
+    implementation 'dev.kizuna.meridian.human:fabric'
+    implementation 'dev.kizuna.meridian.human:server'
+    // 登录假玩家夹具来自功法库的 testFixtures；功法 Fabric 只取模块本身，Framework 单独装入。
+    implementation testFixtures('dev.kizuna.meridian.technique:fabric')
+    implementation('dev.kizuna.meridian.technique:fabric') { transitive = false }
+    implementation 'dev.kizuna.meridian.technique:server'
+    implementation 'dev.kizuna.meridian.technique:shared'
+    implementation 'dev.kizuna.meridian:fabric'
+    // 拳师用例读 PA Mobs 的服务端播放快照；PA Mobs 本身由完整装配在运行期装入。
+    compileOnly('dev.kizuna:kizuna-players-animation-mobs-addon') { transitive = false }
+    // 正式数据包按安装 JAR 装入，验证发行包自己的清单和资源。Gradle 9 的依赖块里 project() 返回
+    // 依赖对象，所以从根工程取 fabric 工程的 jar 任务。测试不编译依赖本仓 fabric：方块、职业都按 ID 取。
+    localRuntime files(rootProject.project(':fabric').tasks.named('jar'))
+}
+
+loom {
+    mods {
+        meridian_villager_test { sourceSet sourceSets.main }
+    }
+    runs {
+        gametest {
+            server()
+            name '袖手拳 GameTest'
+            runDir gametestRunDirectory
+            vmArg '-Dfabric-api.gametest'
+            vmArg '-Dfabric-api.gametest.report-file=build/gametest-results.xml'
+            if (providers.gradleProperty('gametestFilter').isPresent()) {
+                vmArg "-Dfabric-api.gametest.filter=${providers.gradleProperty('gametestFilter').get()}"
+            }
+        }
+    }
+}
+
+tasks.named('runGametest') {
+    doFirst {
+        // 每局从空目录新建世界：26.2 把生成设置与游戏规则拆到 data/minecraft，只删 level.dat 会退回随机地形。
+        // 完整装配里的 owo 在开发环境缺 eula.txt 时会读控制台确认，Gradle 进程没有输入会直接崩，所以预先写好。
+        def runDirectory = file(gametestRunDirectory)
+        runDirectory.mkdirs()
+        new File(runDirectory, 'world').deleteDir()
+        new File(runDirectory, 'eula.txt').text = 'eula=true\n'
+    }
+}
+
+apply from: new File(kizunaWorkspace.directory('framework'), 'scripts/full-assembly.gradle')

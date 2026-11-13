@@ -1,0 +1,17 @@
+description = '袖手拳目录与数据包的单元验证：目录经正式 Human 内容和功法库校验器注册，数据包引用齐全、都能解析。'
+
+dependencies {
+    testImplementation 'dev.kizuna.meridian.technique:server'
+    testImplementation 'dev.kizuna.meridian.human:server'
+    testImplementation libs.junit4
+    testImplementation libs.gson
+    testImplementation project(':shared')
+}
+
+test {
+    useJUnit()
+    // 数据包检查读 fabric 模块的资源源文件，与正式包打进去的是同一份。
+    def fabricResources = project(':fabric').file('src/main/resources')
+    inputs.dir(fabricResources)
+    systemProperty 'villager.fabricResources', fabricResources.absolutePath
+}

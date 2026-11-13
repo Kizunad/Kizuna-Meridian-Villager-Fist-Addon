@@ -1,0 +1,28 @@
+plugins {
+    id 'base'
+    alias(libs.plugins.fabric.loom) apply false
+}
+
+allprojects {
+    group = 'dev.kizuna.meridian.villager'
+    version = '0.1.0-SNAPSHOT'
+}
+
+subprojects {
+    apply plugin: 'java-library'
+    repositories { mavenCentral() }
+    java { toolchain { languageVersion = JavaLanguageVersion.of(libs.versions.java.get()) } }
+    base.archivesName = "${rootProject.name}-${project.name}"
+    tasks.withType(JavaCompile).configureEach {
+        options.release = libs.versions.java.get().toInteger()
+        options.encoding = 'UTF-8'
+    }
+    tasks.withType(Jar).configureEach { from(rootProject.files('LICENSE', 'NOTICE', 'THIRD_PARTY_NOTICES.md')) }
+}
+
+tasks.named('assemble') { dependsOn ':shared:assemble', ':fabric:assemble' }
+tasks.named('check') { dependsOn ':verification:test', ':fabric:test' }
+tasks.register('test') {
+    group = 'verification'
+    dependsOn ':verification:test', ':fabric:test'
+}
