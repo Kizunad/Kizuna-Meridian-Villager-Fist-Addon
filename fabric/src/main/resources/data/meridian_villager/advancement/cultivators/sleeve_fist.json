@@ -1,0 +1,23 @@
+{
+  "parent": "meridian_progression:cultivation/cultivators",
+  "display": {
+    "icon": {
+      "id": "meridian_villager:outer_scroll"
+    },
+    "title": {
+      "translate": "advancements.meridian_villager.cultivators.sleeve_fist.title"
+    },
+    "description": {
+      "translate": "advancements.meridian_villager.cultivators.sleeve_fist.description"
+    },
+    "frame": "goal"
+  },
+  "criteria": {
+    "completed": {
+      "trigger": "meridian_technique:book_completed",
+      "conditions": {
+        "book": "meridian_villager:sleeve_fist"
+      }
+    }
+  }
+}
