@@ -16,6 +16,15 @@
 
 硬依赖：功法库、Framework、Human、Vanilla Damage、PA Mobs、训练假人。没有「未安装时」的退路。
 
+## 村民会还手
+
+本仓往 Threatening 的学卷表登记：村民游炁、真炁两档都学上卷（概率 1.0）。
+原版村民没有攻击手段，学了崩拳、撩天、背摔以后，类人大脑照「打得过就打」评估，被打或被怪盯上会迎上去，打不过照旧躲。
+
+- 登记写在 `data/meridian_villager/humanoid_volumes.toml`，由 `fabric.mod.json` 的 `custom` 键 `meridian_humanoid:volumes` 指过去；Threatening 启动时把它接在自己配置文件同一档的后面，不依赖本仓。
+- 运营方想改概率，在 `meridian-humanoid-brain.toml` 的村民那一档写同一卷即可，照配置文件的算。
+- 功法谱的来源展示读的也是 Threatening 并好的那张表，本仓不用另外登记。
+
 ## 打木桩认哪些桩
 
 视线从眼睛往前最多 2 格，先撞到的那样东西是桩才算：
