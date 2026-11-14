@@ -2,7 +2,7 @@
 
 村里拳师传下来的拳法。本仓现在有：
 
-- 功法目录 `data/meridian_villager/technique_catalog.txtpb`：书《袖手拳》，上卷「外家」三式，见 [Techniques](Techniques.md)。
+- 功法目录 `data/meridian_villager/technique_catalog.txtpb`：书《袖手拳》，上卷「外家」三式，见 [Techniques](Techniques.md)。图标、卷轴贴图和木人桩模型的来历见 [Art](Art.md)。
   中卷、下卷做好再加卷。
 - 木人桩方块 `meridian_villager:wooden_dummy`：一格占地，碰撞高 1.5 格，斧头挖得快，能烧。
   配方和拳师的交易表在数据包里。
