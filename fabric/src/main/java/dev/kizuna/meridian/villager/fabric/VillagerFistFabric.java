@@ -1,5 +1,6 @@
 package dev.kizuna.meridian.villager.fabric;
 
+import dev.kizuna.meridian.humanoid.fabric.HumanoidTargets;
 import net.fabricmc.api.ModInitializer;
 import net.minecraft.resources.Identifier;
 
@@ -13,6 +14,8 @@ public final class VillagerFistFabric implements ModInitializer {
         VillagerFistBlocks.register();
         FistMasterProfession.register();
         FistMasterDuty.register();
+        // 没有功法宿主的原版生物被摔倒是本仓记着的，登记给 Threatening，生人的大脑才看得见「对方倒地」。
+        HumanoidTargets.registerDowned(GrappleLocks::downedBodiless);
         VillagerFistCreativeTab.register();
         ServerEntities.register();
         DummyDrills.register();

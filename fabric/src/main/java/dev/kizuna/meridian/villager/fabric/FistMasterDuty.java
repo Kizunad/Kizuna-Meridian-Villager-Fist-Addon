@@ -16,8 +16,8 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.npc.villager.Villager;
 
 /**
- * 拳师的上任和撤任：村民成了拳师，就学上卷、保底开一条手经、把两臂练到位、挂上「不退」；
- * 不再是拳师就撤掉「不退」，开的脉和练出来的两臂留着。
+ * 拳师的上任和撤任：村民成了拳师，就学上卷、保底开一条手经、把两臂练到位、挂上「不退」和「守村」；
+ * 不再是拳师就撤掉「不退」和「守村」，开的脉和练出来的两臂留着。只撤本仓上任时挂的：别处给村民挂的职守不归这里管。
  *
  * <p>职守挂在 Threatening 的公开入口上，本仓只决定什么时候挂、数值是多少。凡人拳师不任职，只做买卖。</p>
  */
@@ -27,6 +27,8 @@ public final class FistMasterDuty {
     static final double TRUE_QI_ARM_GROWTH = 0.35;
     private static final String OUTER_VOLUME = VillagerFistFabric.MOD_ID + ":outer";
     private static final String HAND_MERIDIAN = "human:hand_meridian";
+    /** 本仓上任过的记号，随实体存档；撤任只认带着它的村民。 */
+    static final String APPOINTED_TAG = VillagerFistFabric.MOD_ID + ".fist_master_appointed";
     /** 职业变过、或刚进世界，还没对过职守的村民；不持有实体，实体没了自然消失。 */
     private static final Set<Villager> UNSETTLED = Collections.newSetFromMap(new WeakHashMap<>());
 
@@ -67,7 +69,7 @@ public final class FistMasterDuty {
             return false;
         }
         if (!FistMasterProfession.is(villager)) {
-            HumanoidDuties.standGround(villager, false);
+            dismiss(villager);
             return true;
         }
         Optional<HumanoidTier> tier = HumanoidTiers.of(villager);
@@ -75,10 +77,18 @@ public final class FistMasterDuty {
             return false;
         }
         if (tier.get() == HumanoidTier.MORTAL) {
-            HumanoidDuties.standGround(villager, false);
+            dismiss(villager);
             return true;
         }
         return appointed(villager);
+    }
+
+    private static void dismiss(Villager villager) {
+        // 没被本仓上任过的不动：别的附属、命令给村民挂的「不退」「守村」照旧留着。
+        if (villager.removeTag(APPOINTED_TAG)) {
+            HumanoidDuties.standGround(villager, false);
+            HumanoidDuties.guardVillage(villager, false);
+        }
     }
 
     private static boolean appointed(Villager villager) {
@@ -91,6 +101,8 @@ public final class FistMasterDuty {
             return false;
         }
         HumanoidDuties.standGround(villager, true);
+        HumanoidDuties.guardVillage(villager, true);
+        villager.addTag(APPOINTED_TAG);
         return true;
     }
 }

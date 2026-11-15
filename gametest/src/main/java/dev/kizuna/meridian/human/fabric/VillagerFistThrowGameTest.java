@@ -3,6 +3,7 @@ package dev.kizuna.meridian.human.fabric;
 import static dev.kizuna.meridian.human.fabric.VillagerFistTestPlayer.CENTER;
 import static dev.kizuna.meridian.human.fabric.VillagerFistTestPlayer.HEIGHT;
 
+import dev.kizuna.meridian.humanoid.fabric.FistMasterDutyGameTest;
 import dev.kizuna.meridian.technique.fabric.TechniqueFabric;
 import dev.kizuna.meridian.technique.protocol.pb.TechniqueMessages.CastPhase;
 import dev.kizuna.meridian.technique.server.TechniqueService.StaggerKind;
@@ -14,8 +15,10 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.entity.EntitySpawnReason;
 import net.minecraft.world.entity.EntityTypes;
 import net.minecraft.world.entity.EquipmentSlot;
+import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.animal.golem.IronGolem;
 import net.minecraft.world.entity.monster.zombie.Zombie;
 import net.minecraft.world.entity.npc.villager.Villager;
@@ -186,15 +189,20 @@ public final class VillagerFistThrowGameTest {
         long castTick = fixture.tick();
         Map<Long, Integer> idle = new HashMap<>();
         Map<Long, Vec3> positions = new HashMap<>();
+        Map<Long, Boolean> seenDowned = new HashMap<>();
+        // 旁观的一方不进世界，只拿来问「大脑选式时认不认僵尸倒着」，不碍着摔。
+        Mob watcher = EntityTypes.COW.create(context.getLevel(), EntitySpawnReason.COMMAND);
         fixture.everyTick(() -> {
             idle.put(fixture.tick() - castTick, zombie.brainTicks);
             positions.put(fixture.tick() - castTick, context.relativeVec(zombie.position()));
+            seenDowned.put(fixture.tick() - castTick, FistMasterDutyGameTest.seesDowned(watcher, zombie));
         });
         fixture.start(THROW, "背摔");
         context.runAfterDelay(AWAKE_CHECK_TICKS, () -> {
             try (fixture) {
                 assertHeld(context, positions, idle);
                 assertLanded(context, positions, landingDistance);
+                assertSeenDownedOnlyWhileDown(context, seenDowned);
                 assertFrozen(context, idle, LAND_TICKS + MARGIN_TICKS, DOWN_END_TICKS - MARGIN_TICKS, "倒地");
                 int awake = idle.get((long) AWAKE_CHECK_TICKS - 1);
                 int down = idle.get((long) DOWN_END_TICKS - MARGIN_TICKS);
@@ -216,6 +224,14 @@ public final class VillagerFistThrowGameTest {
         int before = brain.get((long) SECOND_LAND_TICKS + MARGIN_TICKS);
         int after = brain.get((long) SECOND_AWAKE_TICKS);
         context.assertTrue(after > before, "起来 3 s 内又被摔倒了，大脑没跑：" + before + " → " + after);
+    }
+
+    private static void assertSeenDownedOnlyWhileDown(GameTestHelper context, Map<Long, Boolean> seen) {
+        // 僵尸没有功法宿主，倒地记在本仓的锁里；登记给 Threatening 以后，大脑选式时认得它倒着。被擒着、起来以后都不算倒地。
+        context.assertTrue(!seen.get((long) GRAB_TICKS + MARGIN_TICKS), "僵尸只是被擒着，却被认成倒地");
+        context.assertTrue(seen.get((long) LAND_TICKS + MARGIN_TICKS) && seen.get((long) DOWN_END_TICKS - MARGIN_TICKS),
+                "僵尸被摔倒在地，大脑选式时没认出来");
+        context.assertTrue(!seen.get((long) AWAKE_CHECK_TICKS - 1), "僵尸已经起来了，还被认成倒地");
     }
 
     private static void assertHeld(GameTestHelper context, Map<Long, Vec3> positions, Map<Long, Integer> idle) {

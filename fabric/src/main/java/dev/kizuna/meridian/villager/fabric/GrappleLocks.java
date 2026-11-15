@@ -60,6 +60,12 @@ public final class GrappleLocks {
         return bodiless.containsKey(mob.getUUID());
     }
 
+    /** 这个实体是不是被本仓锁成了倒地（没有功法宿主的原版生物被摔倒）；登记给 Threatening，生人的大脑据此认「对方倒地」。 */
+    public static boolean downedBodiless(LivingEntity target) {
+        BodilessLock lock = bodiless.get(target.getUUID());
+        return lock != null && lock.kind() == StaggerKind.DOWN;
+    }
+
     static void expire(long nowTick) {
         // 倒地到点起来；被擒没有期限，只随放手解除。
         bodiless.entrySet().removeIf(entry -> {

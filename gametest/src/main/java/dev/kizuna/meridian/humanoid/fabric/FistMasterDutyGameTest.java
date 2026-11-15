@@ -8,6 +8,7 @@ import dev.kizuna.meridian.technique.fabric.TechniqueFabric;
 import dev.kizuna.meridian.technique.protocol.pb.TechniqueMessages.Hand;
 import dev.kizuna.meridian.technique.protocol.pb.TechniqueMessages.TechniqueProgress;
 import dev.kizuna.meridian.technique.server.TechniqueBinder;
+import dev.kizuna.meridian.technique.server.TechniqueSelector;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -25,6 +26,7 @@ import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntitySpawnReason;
 import net.minecraft.world.entity.EntityTypes;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.monster.zombie.Husk;
@@ -72,7 +74,8 @@ public final class FistMasterDutyGameTest {
     @GameTest(maxTicks = APPOINT_TIMEOUT)
     public void villagerTakingTheJobIsAppointedAndLeavingItDismissed(GameTestHelper context) {
         // 一条手经都没开的游炁村民成了拳师：会上卷三式、保底开了一条手经（崩拳因此绑得上）、两臂训练成长到位、挂上不退；
-        // 不再是拳师，不退撤掉，开的脉和练出来的两臂留着。凡人成了拳师不任职。两人都不开 AI，职业由用例直接改。
+        // 不再是拳师，不退撤掉，开的脉和练出来的两臂留着。凡人成了拳师不任职。都不开 AI，职业由用例直接改。
+        // 第三个村民不是拳师，「不退」「守村」是别处给他挂的：本仓对职守时不动他的。
         Villager master = villager(context, HumanoidTier.MORTAL, new BlockPos(2, 2, 2), true /* idle */,
                 Optional.empty());
         // 出生抽到什么和所在区域有关，不能指望一定抽得到没开手经的游炁村民：拿凡人的身体先开一条足经，
@@ -82,28 +85,38 @@ public final class FistMasterDutyGameTest {
                 "用例要的是游炁、没开手经的村民");
         Villager mortal = villager(context, HumanoidTier.MORTAL, new BlockPos(5, 2, 5), true /* idle */,
                 Optional.empty());
+        Villager outsider = villager(context, HumanoidTier.MORTAL, new BlockPos(5, 2, 2), true /* idle */,
+                Optional.empty());
+        HumanoidDuties.standGround(outsider, true);
+        HumanoidDuties.guardVillage(outsider, true);
         List<BodyMessages.TissueState> before = body(master).getTissueStatesList();
         List<BodyMessages.TissueState> mortalBefore = body(mortal).getTissueStatesList();
         context.assertTrue(!bindable(master, CRUSHING_FIST), "没开手经的村民不该绑得上崩拳");
         employ(context, master, FIST_MASTER);
         employ(context, mortal, FIST_MASTER);
         context.runAfterDelay(SETTLE_TICKS, () -> {
-            context.assertTrue(HumanoidDuties.standsGround(master), "拳师上任后没有挂上不退");
+            context.assertTrue(HumanoidDuties.standsGround(master) && HumanoidDuties.guardsVillage(master),
+                    "拳师上任后没有挂上不退和守村");
             context.assertTrue(handOpened(master) && bindable(master, CRUSHING_FIST), "拳师上任后还是用不了拳");
             verifyArms(context, master, before, WANDERING_QI_GROWTH);
             List<String> known = TechniqueFabric.service().known(master.getUUID()).stream()
                     .map(entry -> entry.technique().getId()).toList();
             context.assertTrue(known.containsAll(OUTER), "拳师不会上卷三式：" + known);
-            context.assertTrue(!HumanoidDuties.standsGround(mortal), "凡人拳师不该任职");
+            context.assertTrue(!HumanoidDuties.standsGround(mortal) && !HumanoidDuties.guardsVillage(mortal),
+                    "凡人拳师不该任职");
             context.assertTrue(body(mortal).getTissueStatesList().equals(mortalBefore) && !handOpened(mortal),
                     "凡人拳师的身体被动过");
+            context.assertTrue(HumanoidDuties.standsGround(outsider) && HumanoidDuties.guardsVillage(outsider),
+                    "不是拳师的村民，别处挂的不退和守村被本仓撤掉了");
             employ(context, master, VillagerProfession.NONE);
             context.runAfterDelay(SETTLE_TICKS, () -> {
-                context.assertTrue(!HumanoidDuties.standsGround(master), "不再是拳师，不退没有撤掉");
+                context.assertTrue(!HumanoidDuties.standsGround(master) && !HumanoidDuties.guardsVillage(master),
+                        "不再是拳师，不退和守村没有撤掉");
                 context.assertTrue(handOpened(master), "不再是拳师，开的手经不该收回");
                 verifyArms(context, master, before, WANDERING_QI_GROWTH);
                 master.discard();
                 mortal.discard();
+                outsider.discard();
                 context.succeed();
             });
         });
@@ -236,6 +249,12 @@ public final class FistMasterDutyGameTest {
                 casts.putIfAbsent(request.getCastId(), request.getTechnique().getId());
             }
         }
+    }
+
+    /** 大脑选式时认不认为这个对手倒在地上（和选式同一个入口；self 是出手的一方）。别的包里的用例也能调。 */
+    public static boolean seesDowned(Mob self, LivingEntity target) {
+        var opponent = new HumanoidOpponent(target, TechniqueFabric.service().observe(target.getUUID()));
+        return HumanoidRepertoires.facts(self, opponent).contains(TechniqueSelector.CombatFact.TARGET_DOWNED);
     }
 
     /** 失败信息用：这个村民的大脑最近做了哪些决策、带没带着不退。别的包里的用例也能调。 */
