@@ -3,6 +3,12 @@ plugins { id 'net.fabricmc.fabric-loom' }
 description = '袖手拳正式目录与 Human 玩家、原版村民大脑、PA Mobs 的整合 GameTest，正式包不含这里的代码。'
 def gametestRunDirectory = providers.gradleProperty('gametestRunDir').getOrElse('build/gametest')
 
+repositories {
+    // Threatening 以源码组合进来，完整装配按坐标装入它的 fabric 模块，连带它 include 的寻路核心；
+    // 寻路核心不参与源码组合，按文件取；位置由工作区给。
+    flatDir { dirs kizunaWorkspace.artifact('pathfinding', 'core', false).parentFile }
+}
+
 dependencies {
     // 26.x 不混淆：直接用官方名编译，模组依赖也不经重映射。
     minecraft libs.minecraft
@@ -17,6 +23,9 @@ dependencies {
     implementation 'dev.kizuna.meridian.technique:server'
     implementation 'dev.kizuna.meridian.technique:shared'
     implementation 'dev.kizuna.meridian:fabric'
+    // 拳师职守的用例放在 Threatening 的 Fabric 包里，读它的包内入口看身体和当前施放；运行时由完整装配提供。
+    compileOnly('dev.kizuna.meridian.humanoid:fabric') { transitive = false }
+    compileOnly('dev.kizuna.meridian.humanoid:server') { transitive = false }
     // 拳师用例读 PA Mobs 的服务端播放快照；PA Mobs 本身由完整装配在运行期装入。
     compileOnly('dev.kizuna:kizuna-players-animation-mobs-addon') { transitive = false }
     // 正式数据包按安装 JAR 装入，验证发行包自己的清单和资源。Gradle 9 的依赖块里 project() 返回

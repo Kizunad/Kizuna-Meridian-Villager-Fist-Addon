@@ -34,6 +34,13 @@ definitions {
     maximum_hp_ratio { value: 1 unit: RATIO }
     minimum_qi_ratio { value: 0 unit: RATIO }
     category_weight { value: 1 unit: RATIO }
+    # 生物选式：拳打在盾上会被挡，对方举盾时让给背摔；被围时让给撩天；对方倒地时补一拳。
+    # 「让给」写成极小的权重而不是零：该出的那一式在冷却或放不出时，这一式还能出，不至于判了出手却选不出式。
+    combat {
+      target_shielding_weight { value: 0.0001 unit: RATIO }
+      surrounded_weight { value: 0.0001 unit: RATIO }
+      target_downed_weight { value: 3 unit: RATIO }
+    }
   }
   category: ATTACK
   minimum_realm: WANDERING_QI
@@ -118,6 +125,11 @@ definitions {
     maximum_hp_ratio { value: 1 unit: RATIO }
     minimum_qi_ratio { value: 0 unit: RATIO }
     category_weight { value: 1 unit: RATIO }
+    # 生物选式：被围时优先用它把人掀开；对方举盾时让给背摔（极小的权重，理由同崩拳）。
+    combat {
+      target_shielding_weight { value: 0.0001 unit: RATIO }
+      surrounded_weight { value: 8 unit: RATIO }
+    }
   }
   category: ATTACK
   minimum_realm: WANDERING_QI
@@ -209,6 +221,11 @@ definitions {
     maximum_hp_ratio { value: 1 unit: RATIO }
     minimum_qi_ratio { value: 0 unit: RATIO }
     category_weight { value: 1 unit: RATIO }
+    # 生物选式：擒不怕盾，对方举盾时优先出这一式；被围时让给撩天（极小的权重，理由同崩拳）。
+    combat {
+      target_shielding_weight { value: 4 unit: RATIO }
+      surrounded_weight { value: 0.0001 unit: RATIO }
+    }
   }
   category: ATTACK
   minimum_realm: WANDERING_QI

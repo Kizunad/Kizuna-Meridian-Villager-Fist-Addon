@@ -31,6 +31,7 @@
     "meridian_human_host": "*",
     "meridian_vanilla_damage": "*",
     "kizuna_players_animation_mobs": "*",
-    "meridian_humanoid_dummy": "*"
+    "meridian_humanoid_dummy": "*",
+    "meridian_humanoid_host": "*"
   }
 }

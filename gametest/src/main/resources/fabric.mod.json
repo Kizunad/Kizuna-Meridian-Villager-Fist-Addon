@@ -11,7 +11,8 @@
       "dev.kizuna.meridian.human.fabric.FistMasterGameTest",
       "dev.kizuna.meridian.human.fabric.VillagerFistThrowGameTest",
       "dev.kizuna.meridian.human.fabric.VillagerFistHoldGameTest",
-      "dev.kizuna.meridian.human.fabric.VillagerFistRetaliateGameTest"
+      "dev.kizuna.meridian.human.fabric.VillagerFistRetaliateGameTest",
+      "dev.kizuna.meridian.humanoid.fabric.FistMasterDutyGameTest"
     ]
   },
   "custom": {

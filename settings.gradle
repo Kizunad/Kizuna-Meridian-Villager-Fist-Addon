@@ -22,6 +22,12 @@ kizunaWorkspace.includeSource('technique', [
     server: 'dev.kizuna.meridian.technique:server',
     shared: 'dev.kizuna.meridian.technique:shared'
 ])
+// 经 Threatening 嵌套组合的炼药客户端按真实坐标依赖 bs3d client，而经 Human 嵌套的 Progression 只登记 bs3d server；
+// 同一仓库只按最先登记的规则替换，所以 bs3d 要在 Human 之前组合并列出两个模块。
+kizunaWorkspace.includeSource('bs3d', [
+    client: 'dev.kizuna.backpack3d:client',
+    server: 'dev.kizuna.backpack3d:server'
+])
 kizunaWorkspace.includeSource('human', [
     fabric: 'dev.kizuna.meridian.human:fabric',
     server: 'dev.kizuna.meridian.human:server',
@@ -33,3 +39,8 @@ kizunaWorkspace.includeSource('vanilla-damage', [
 ])
 // 拳师打桩动作经 PA Mobs 的服务端播放，按真实坐标声明依赖。
 kizunaWorkspace.includeSource('players-animation-mobs', ['': 'dev.kizuna:kizuna-players-animation-mobs-addon'])
+// 村民成为拳师时调 Threatening 的公开入口查档位、挂职守；Threatening 不依赖本仓，方向只有这一个。
+kizunaWorkspace.includeSource('humanoid-threatening', [
+    fabric: 'dev.kizuna.meridian.humanoid:fabric',
+    server: 'dev.kizuna.meridian.humanoid:server'
+])

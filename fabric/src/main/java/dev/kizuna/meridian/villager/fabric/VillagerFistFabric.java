@@ -12,6 +12,7 @@ public final class VillagerFistFabric implements ModInitializer {
         // 方块先于工作站点和职业注册：工作站点要列出木人桩的全部方块状态。
         VillagerFistBlocks.register();
         FistMasterProfession.register();
+        FistMasterDuty.register();
         VillagerFistCreativeTab.register();
         ServerEntities.register();
         DummyDrills.register();

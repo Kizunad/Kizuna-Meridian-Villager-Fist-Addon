@@ -4,6 +4,11 @@ plugins {
 
 description = '袖手拳的 26.2 Fabric 注册与世界接线：木人桩、拳师职业、打木桩处理器、拳师打桩行为。'
 
+repositories {
+    // Threatening 以源码组合进来，它 include 的寻路核心不参与源码组合，按文件取；位置由工作区给。
+    flatDir { dirs kizunaWorkspace.artifact('pathfinding', 'core', false).parentFile }
+}
+
 dependencies {
     minecraft libs.minecraft
     implementation libs.fabric.loader
@@ -15,6 +20,9 @@ dependencies {
     implementation 'dev.kizuna.meridian.technique:shared'
     // 拳师打桩动作由服务端经 PA Mobs 播放；PA Mobs 是硬依赖。
     implementation 'dev.kizuna:kizuna-players-animation-mobs-addon'
+    // 上任时查档位、挂职守走 Threatening 的公开入口；它是必装模组，运行时由完整装配提供。
+    compileOnly('dev.kizuna.meridian.humanoid:fabric') { transitive = false }
+    compileOnly('dev.kizuna.meridian.humanoid:server') { transitive = false }
     include project(':shared')
     testImplementation libs.junit4
 }

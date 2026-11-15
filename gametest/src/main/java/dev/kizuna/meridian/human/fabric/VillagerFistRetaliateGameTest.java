@@ -4,12 +4,14 @@ import static dev.kizuna.meridian.human.fabric.VillagerFistTestPlayer.CENTER;
 import static dev.kizuna.meridian.human.fabric.VillagerFistTestPlayer.HEIGHT;
 import static dev.kizuna.meridian.human.fabric.VillagerFistTestPlayer.PREFIX;
 
+import dev.kizuna.meridian.humanoid.fabric.FistMasterDutyGameTest;
 import dev.kizuna.meridian.technique.fabric.TechniqueFabric;
 import java.util.List;
 import java.util.Locale;
 import net.fabricmc.fabric.api.gametest.v1.GameTest;
 import net.minecraft.core.BlockPos;
 import net.minecraft.gametest.framework.GameTestHelper;
+import net.minecraft.network.chat.Component;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityTypes;
@@ -37,14 +39,17 @@ public final class VillagerFistRetaliateGameTest {
     /** 类人大脑放下敌人的距离是 32 格；开场清掉这个范围里别的批次留下的生物，免得村民先盯上它们。 */
     private static final double CLEAR_RADIUS = 40;
     private static final int TIMEOUT_TICKS = 800;
+    private static final int SPAWN_ATTEMPTS = 40;
 
     @GameTest(environment = "meridian_villager_test:retaliate", maxTicks = TIMEOUT_TICKS)
     public void wanderingQiVillagerKnowsOuterVolumeAndFightsBackWithIt(GameTestHelper context) {
-        // 用正式的生成命令出生一个游炁村民：没人另外教它，上卷三式是学卷表发的。
+        // 用正式的生成命令出生一个游炁村民：没人另外教它，上卷三式是学卷表发的。真元补满，出生时抽到真元少、
+        // 一式都付不起的村民照评估会躲，那不是这条用例要看的。
         // 尸壳不动、不还手，只当敌意来源；村民用袖手拳的伤害类型打掉它的血才算还手。
         floor(context);
         clearMobs(context);
-        Villager villager = spawn(context);
+        Villager villager = spawnWithOpenedHand(context);
+        FistMasterDutyGameTest.fillQi(context, villager);
         Husk husk = context.spawn(EntityTypes.HUSK, HUSK);
         husk.setNoAi(true /* aiDisabled */);
         husk.setSilent(true /* silent */);
@@ -57,11 +62,25 @@ public final class VillagerFistRetaliateGameTest {
         context.assertTrue(known.containsAll(OUTER_STRIKES), "游炁村民出生没学到袖手拳上卷：" + known);
         context.succeedWhen(() -> {
             DamageSource last = husk.getLastDamageSource();
-            context.assertTrue(husk.getHealth() < HUSK_HEALTH && last != null, "村民还没打伤尸壳");
+            context.assertTrue(husk.getHealth() < HUSK_HEALTH && last != null,
+                    "村民还没打伤尸壳" + FistMasterDutyGameTest.trail(villager));
             context.assertTrue(last.getEntity() == villager, "打伤尸壳的不是这个村民：" + last.getEntity());
             context.assertTrue(last.typeHolder().getRegisteredName().startsWith(PREFIX),
                     "村民不是用袖手拳打的：" + last.typeHolder().getRegisteredName());
         });
+    }
+
+    private static Villager spawnWithOpenedHand(GameTestHelper context) {
+        // 游炁村民大约五个里有一个一条手经都没开，用不了拳，照规则只会躲；这条用例看的是用得了拳的村民，
+        // 所以没开手经的丢掉重新生成。
+        for (int attempt = 0; attempt < SPAWN_ATTEMPTS; attempt++) {
+            Villager villager = spawn(context);
+            if (FistMasterDutyGameTest.handOpened(villager)) {
+                return villager;
+            }
+            villager.discard();
+        }
+        throw context.assertionException(Component.literal("连着生成的村民都没有开了的手经"));
     }
 
     private static Villager spawn(GameTestHelper context) {
