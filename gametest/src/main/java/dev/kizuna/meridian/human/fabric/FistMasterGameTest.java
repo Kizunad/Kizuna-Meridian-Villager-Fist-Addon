@@ -1,5 +1,6 @@
 package dev.kizuna.meridian.human.fabric;
 
+import dev.kizuna.meridian.humanoid.fabric.FistMasterDutyGameTest;
 import static dev.kizuna.meridian.human.fabric.VillagerFistTestPlayer.CENTER;
 import static dev.kizuna.meridian.human.fabric.VillagerFistTestPlayer.HEIGHT;
 
@@ -13,12 +14,17 @@ import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.resources.Identifier;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.tags.PoiTypeTags;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityTypes;
+import net.minecraft.world.entity.Mob;
+import net.minecraft.world.entity.ai.memory.MemoryModuleType;
 import net.minecraft.world.entity.ai.village.poi.PoiType;
 import net.minecraft.world.entity.npc.villager.Villager;
 import net.minecraft.world.entity.npc.villager.VillagerData;
 import net.minecraft.world.entity.npc.villager.VillagerProfession;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.Vec3;
 
 /** 原版村民大脑：无业村民认领木人桩成为拳师，等级和类型不变；上班时间在桩前循环打桩动作。 */
 public final class FistMasterGameTest {
@@ -36,11 +42,16 @@ public final class FistMasterGameTest {
     private static final int FLOOR_Y = HEIGHT - 1;
     /** 原版工作行为过了 300 tick 冷却后每次 50% 起手，留足两分钟。 */
     private static final int TIMEOUT_TICKS = 2400;
+    /** 原版找工作站点最远看 48 格，清得比它大一圈。 */
+    private static final double CLEAR_RADIUS = 64;
 
     @GameTest(environment = "meridian_villager_test:work_hours", maxTicks = TIMEOUT_TICKS)
     public void unemployedVillagerBecomesAFistMasterAndDrillsAtWork(GameTestHelper context) {
         // 时钟停在 3000（村民日程 2000–9000 是上班）；先确认桩是可认领站点，成为拳师后原版工作行为换成打桩，PA Mobs 记下循环动作。
         floor(context);
+        // 别的批次留下的拳师（有职业、没站点、开着 AI）会抢先把这根桩认领走，开场先把附近的生物清掉。
+        context.getLevel().getEntitiesOfClass(Mob.class, new AABB(context.absolutePos(POST)).inflate(CLEAR_RADIUS),
+                mob -> true).forEach(Entity::discard);
         context.setBlock(POST, BuiltInRegistries.BLOCK.getValue(WOODEN_DUMMY));
         var site = context.getLevel().getPoiManager().getType(context.absolutePos(POST));
         boolean acquirable = site.isPresent() && site.get().is(FIST_MASTER_SITE)
@@ -56,8 +67,20 @@ public final class FistMasterGameTest {
             context.assertTrue(data.type().equals(before.type()), "成为拳师后类型变了：" + data.type());
             boolean drilling = MobAnimationServer.snapshot(villager).stream()
                     .anyMatch(FistMasterGameTest::isDrillLoop);
-            context.assertTrue(drilling, "上班时间拳师没有循环打桩动作");
+            context.assertTrue(drilling, "上班时间拳师没有循环打桩动作" + whereabouts(context, villager)
+                    + FistMasterDutyGameTest.engagement(villager) + FistMasterDutyGameTest.trail(villager));
         });
+    }
+
+    private static String whereabouts(GameTestHelper context, Villager villager) {
+        // 人在哪、离桩多远、记不记得工作站点、原版现在排的是哪个活动：分得出是走不到桩前，还是到了桩前不开工。
+        var post = context.absolutePos(POST);
+        var brain = villager.getBrain();
+        return "；位置 " + villager.blockPosition() + " 桩 " + post + " 离桩 "
+                + String.format("%.2f", Math.sqrt(villager.distanceToSqr(Vec3.atCenterOf(post))))
+                + " 着地=" + villager.onGround() + " 记得站点=" + brain.getMemory(MemoryModuleType.JOB_SITE)
+                + " 活动=" + brain.getActiveNonCoreActivity() + " 走向=" + brain.getMemory(MemoryModuleType.WALK_TARGET)
+                + " 睡着=" + villager.isSleeping();
     }
 
     private static void floor(GameTestHelper context) {

@@ -56,20 +56,9 @@ definitions {
   }
   category: ATTACK
   minimum_realm: WANDERING_QI
-  slots {
-    id: "hand_meridians" module: MERIDIAN tags: "human:hand_meridian"
-    minimum_count: 1 maximum_count: 6 require_opened: true
-  }
   slots { id: "arm_muscles" module: TISSUE tags: "human:arm_muscle" minimum_count: 6 maximum_count: 6 }
   slots { id: "leg_muscles" module: TISSUE tags: "human:leg_muscle" minimum_count: 6 maximum_count: 6 }
   cost {
-    qi {
-      slot_id: "hand_meridians"
-      matching: ANY_ATTRIBUTE_AT_LEAST_PHASE
-      phase: FREE
-      amount { value: 3 unit: QI }
-      distribution: EVEN
-    }
     work {
       slot_id: "arm_muscles" force { value: 0 unit: NEWTON }
       power { value: 66.67 unit: WATT } duration { value: 0.3 unit: SECOND }
@@ -145,20 +134,9 @@ definitions {
   }
   category: ATTACK
   minimum_realm: WANDERING_QI
-  slots {
-    id: "hand_meridians" module: MERIDIAN tags: "human:hand_meridian"
-    minimum_count: 1 maximum_count: 6 require_opened: true
-  }
   slots { id: "arm_muscles" module: TISSUE tags: "human:arm_muscle" minimum_count: 6 maximum_count: 6 }
   slots { id: "leg_muscles" module: TISSUE tags: "human:leg_muscle" minimum_count: 6 maximum_count: 6 }
   cost {
-    qi {
-      slot_id: "hand_meridians"
-      matching: ANY_ATTRIBUTE_AT_LEAST_PHASE
-      phase: FREE
-      amount { value: 8 unit: QI }
-      distribution: EVEN
-    }
     work {
       slot_id: "arm_muscles" force { value: 0 unit: NEWTON }
       power { value: 116.67 unit: WATT } duration { value: 0.4 unit: SECOND }
@@ -241,20 +219,9 @@ definitions {
   }
   category: ATTACK
   minimum_realm: WANDERING_QI
-  slots {
-    id: "hand_meridians" module: MERIDIAN tags: "human:hand_meridian"
-    minimum_count: 1 maximum_count: 6 require_opened: true
-  }
   slots { id: "arm_muscles" module: TISSUE tags: "human:arm_muscle" minimum_count: 6 maximum_count: 6 }
   slots { id: "leg_muscles" module: TISSUE tags: "human:leg_muscle" minimum_count: 6 maximum_count: 6 }
   cost {
-    qi {
-      slot_id: "hand_meridians"
-      matching: ANY_ATTRIBUTE_AT_LEAST_PHASE
-      phase: FREE
-      amount { value: 10 unit: QI }
-      distribution: EVEN
-    }
     work {
       slot_id: "arm_muscles" force { value: 0 unit: NEWTON }
       power { value: 100 unit: WATT } duration { value: 1.4 unit: SECOND }
@@ -327,20 +294,14 @@ definitions {
   }
   category: ATTACK
   minimum_realm: WANDERING_QI
+  # 内家要游炁：至少开着一条手经才使得出（凡人一条经都没开）。不花真元，这个槽只当门槛。
   slots {
     id: "hand_meridians" module: MERIDIAN tags: "human:hand_meridian"
-    minimum_count: 2 maximum_count: 6 require_opened: true
+    minimum_count: 1 maximum_count: 1 require_opened: true
   }
   slots { id: "arm_muscles" module: TISSUE tags: "human:arm_muscle" minimum_count: 6 maximum_count: 6 }
   slots { id: "leg_muscles" module: TISSUE tags: "human:leg_muscle" minimum_count: 6 maximum_count: 6 }
   cost {
-    qi {
-      slot_id: "hand_meridians"
-      matching: ANY_ATTRIBUTE_AT_LEAST_PHASE
-      phase: FREE
-      amount { value: 8 unit: QI }
-      distribution: EVEN
-    }
     work {
       slot_id: "arm_muscles" force { value: 0 unit: NEWTON }
       power { value: 100 unit: WATT } duration { value: 0.2 unit: SECOND }
@@ -413,19 +374,13 @@ definitions {
   }
   category: ATTACK
   minimum_realm: WANDERING_QI
+  # 内家要游炁：至少开着一条手经才使得出（凡人一条经都没开）。不花真元，这个槽只当门槛。
   slots {
     id: "hand_meridians" module: MERIDIAN tags: "human:hand_meridian"
-    minimum_count: 2 maximum_count: 6 require_opened: true
+    minimum_count: 1 maximum_count: 1 require_opened: true
   }
   slots { id: "arm_muscles" module: TISSUE tags: "human:arm_muscle" minimum_count: 6 maximum_count: 6 }
   cost {
-    qi {
-      slot_id: "hand_meridians"
-      matching: ANY_ATTRIBUTE_AT_LEAST_PHASE
-      phase: FREE
-      amount { value: 8 unit: QI }
-      distribution: EVEN
-    }
     work {
       slot_id: "arm_muscles" force { value: 0 unit: NEWTON }
       power { value: 66.67 unit: WATT } duration { value: 1.6 unit: SECOND }

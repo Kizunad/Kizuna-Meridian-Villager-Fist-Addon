@@ -15,6 +15,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.UUID;
 import net.fabricmc.fabric.api.gametest.v1.GameTest;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.Registries;
@@ -61,12 +62,12 @@ public final class FistMasterDutyGameTest {
     private static final int TRAIL = 12;
     private static final int BIRTH_ATTEMPTS = 40;
     private static final String HAND_MERIDIAN = "human:hand_meridian";
-    private static final String NEAREST_VILLAGER = "@e[type=minecraft:villager,limit=1,sort=nearest]";
-    private static final int APPOINTED_HANDS = 2;
+    private static final int APPOINTED_HANDS = 1;
     private static final String INCH_POWER = "meridian_villager:inch_power";
     private static final String FOOT_MERIDIAN = "human:foot_meridian";
     private static final int SHIELD_UP_TICKS = 10;
     private static final int WAKE_TICKS = 10;
+    private static final Map<UUID, String> AT_WAKE = new HashMap<>();
     private static final double DUMMY_HEALTH = 1000;
     private static final double CLEAR_RADIUS = 40;
     private static final BlockPos CENTER = new BlockPos(3, 2, 3);
@@ -76,9 +77,10 @@ public final class FistMasterDutyGameTest {
 
     @GameTest(maxTicks = APPOINT_TIMEOUT)
     public void villagerTakingTheJobIsAppointedAndLeavingItDismissed(GameTestHelper context) {
-        // 一条手经都没开的游炁村民成了拳师：会上卷三式和中卷、保底开了两条手经（崩拳、寸劲因此绑得上）、
-        // 两臂训练成长到位、挂上不退；
-        // 不再是拳师，不退撤掉，开的脉和练出来的两臂留着。凡人成了拳师不任职。都不开 AI，职业由用例直接改。
+        // 一条手经都没开的游炁村民成了拳师：会上卷三式和中卷；上任前上卷三式就放得出（只靠肌肉，不花真元、
+        // 不占经脉），中卷的寸劲绑不上（内家要开着一条手经）；上任后保底开了一条手经，寸劲绑得上了，
+        // 两臂训练成长到位、挂上不退；不再是拳师，不退撤掉，开的脉和练出来的两臂留着。
+        // 凡人成了拳师不任职、身体不动，但上卷三式照样放得出。都不开 AI，职业由用例直接改。
         // 第三个村民不是拳师，「不退」「守村」是别处给他挂的：本仓对职守时不动他的。
         Villager master = villager(context, HumanoidTier.MORTAL, new BlockPos(2, 2, 2), true /* idle */,
                 Optional.empty());
@@ -95,7 +97,9 @@ public final class FistMasterDutyGameTest {
         HumanoidDuties.guardVillage(outsider, true);
         List<BodyMessages.TissueState> before = body(master).getTissueStatesList();
         List<BodyMessages.TissueState> mortalBefore = body(mortal).getTissueStatesList();
-        context.assertTrue(!bindable(master, CRUSHING_FIST), "没开手经的村民不该绑得上崩拳");
+        Husk opponent = dummy(context, new BlockPos(2, 2, 3));
+        context.assertTrue(candidates(master, opponent).containsAll(OUTER) && !bindable(master, INCH_POWER),
+                "没开手经的游炁村民应当放得出上卷三式、绑不上中卷的寸劲：" + candidates(master, opponent));
         employ(context, master, FIST_MASTER);
         employ(context, mortal, FIST_MASTER);
         context.runAfterDelay(SETTLE_TICKS, () -> {
@@ -103,11 +107,16 @@ public final class FistMasterDutyGameTest {
                     "拳师上任后没有挂上不退和守村");
             context.assertTrue(handOpened(master) && bindable(master, CRUSHING_FIST), "拳师上任后还是用不了拳");
             context.assertTrue(handsOpened(master) == APPOINTED_HANDS && bindable(master, INCH_POWER),
-                    "拳师上任后应保底开着两条手经、绑得上中卷的寸劲，实际开了 " + handsOpened(master));
+                    "拳师上任后应保底开着一条手经、绑得上中卷的寸劲，实际开了 " + handsOpened(master));
             verifyArms(context, master, before, WANDERING_QI_GROWTH);
             List<String> known = TechniqueFabric.service().known(master.getUUID()).stream()
                     .map(entry -> entry.technique().getId()).toList();
             context.assertTrue(known.containsAll(OUTER), "拳师不会上卷三式：" + known);
+            List<String> castable = candidates(master, opponent);
+            context.assertTrue(castable.containsAll(OUTER), "拳师放不出上卷三式：" + castable);
+            List<String> mortalCastable = candidates(mortal, opponent);
+            context.assertTrue(mortalCastable.containsAll(OUTER), "凡人村民放不出上卷三式：" + mortalCastable);
+            opponent.discard();
             context.assertTrue(!HumanoidDuties.standsGround(mortal) && !HumanoidDuties.guardsVillage(mortal),
                     "凡人拳师不该任职");
             context.assertTrue(body(mortal).getTissueStatesList().equals(mortalBefore) && !handOpened(mortal),
@@ -130,8 +139,8 @@ public final class FistMasterDutyGameTest {
 
     @GameTest(environment = "meridian_villager_test:fist_master_shield", maxTicks = FIGHT_TIMEOUT)
     public void fistMastersOpenWithTheThrowAgainstAShield(GameTestHelper context) {
-        // 三个拳师各对着一只一直举盾的尸壳：拳打在盾上会被挡，第一式都是背摔。三个一起看，免得单个碰巧抽中。
-        // 尸壳不动、不还手，盾一直举着。
+        // 三个拳师各对着一只一直举盾、不动不还手的尸壳：拳打在盾上会被挡，第一式都是背摔。
+        // 三个一起看，免得单个碰巧抽中。
         floor(context);
         clearMobs(context);
         List<Villager> masters = new ArrayList<>();
@@ -148,27 +157,25 @@ public final class FistMasterDutyGameTest {
         // 盾举起来要过几 tick 才算挡住；等盾都举稳了再放拳师进来，免得第一次决策时对面还不算举盾。
         context.runAfterDelay(SHIELD_UP_TICKS, () -> {
             for (int index = 0; index < SPOTS.size(); index++) {
-                Villager master = fistMaster(context, SPOTS.get(index), shielded.get(index), THROW);
-                shielded.get(index).setTarget(master);
-                masters.add(master);
+                masters.add(recruit(context, SPOTS.get(index), List.of(shielded.get(index)), THROW));
             }
             wake(context, masters);
         });
         context.succeedWhen(() -> {
             context.assertTrue(masters.size() == SPOTS.size(), "拳师还没进场");
             for (int index = 0; index < masters.size(); index++) {
-                boolean silent = casts.get(index).isEmpty();
-                watch(masters.get(index), casts.get(index));
-                if (silent && !casts.get(index).isEmpty()) {
-                    // 第一次出手的那一刻就记下背摔的状况：事后再看，冷却、距离都变了。
+                List<String> techniques = castsSoFar(context, masters.get(index), casts.get(index));
+                if (techniques.isEmpty()) {
+                    // 还没出手时记下这一刻背摔的状况。出手那一 tick 不再记，留下的就是付钱之前的样子。
                     firstCast.put(index, throwState(masters.get(index), shielded.get(index)));
                 }
-                List<String> techniques = new ArrayList<>(casts.get(index).values());
                 String where = "第 " + index + " 个拳师";
                 context.assertTrue(!techniques.isEmpty(), where + "还没出手" + trail(masters.get(index)));
                 context.assertTrue(shielded.get(index).isBlocking(), where + "对面的盾放下了，这条用例不成立");
                 context.assertTrue(techniques.getFirst().equals(THROW), where + "对着盾的第一式不是背摔：" + techniques
-                        + "；出手那一刻背摔的状况 " + firstCast.get(index) + trail(masters.get(index)));
+                        + "；出手前一刻背摔的状况 " + firstCast.get(index) + "；开打那一刻"
+                        + AT_WAKE.get(masters.get(index).getUUID()) + " 对手位置=" + shielded.get(index).position()
+                        + trail(masters.get(index)));
             }
         });
     }
@@ -181,22 +188,17 @@ public final class FistMasterDutyGameTest {
         List<Villager> masters = new ArrayList<>();
         List<Map<String, String>> casts = new ArrayList<>();
         for (BlockPos position : SPOTS) {
-            Husk east = dummy(context, position.east());
-            Husk south = dummy(context, position.south());
-            Villager master = fistMaster(context, position, east, LIFT);
-            east.setTarget(master);
-            south.setTarget(master);
-            masters.add(master);
+            List<Husk> husks = List.of(dummy(context, position.east()), dummy(context, position.south()));
+            masters.add(recruit(context, position, husks, LIFT));
             casts.add(new LinkedHashMap<>());
         }
         wake(context, masters);
         context.succeedWhen(() -> {
             for (int index = 0; index < masters.size(); index++) {
-                watch(masters.get(index), casts.get(index));
-                List<String> techniques = new ArrayList<>(casts.get(index).values());
+                List<String> techniques = castsSoFar(context, masters.get(index), casts.get(index));
                 context.assertTrue(!techniques.isEmpty(), "第 " + index + " 个拳师还没出手" + trail(masters.get(index)));
                 context.assertTrue(techniques.getFirst().equals(LIFT), "被围的拳师第一式不是撩天：" + techniques
-                        + trail(masters.get(index)));
+                        + "；开打那一刻" + AT_WAKE.get(masters.get(index).getUUID()) + trail(masters.get(index)));
             }
         });
     }
@@ -263,6 +265,13 @@ public final class FistMasterDutyGameTest {
         return HumanoidRepertoires.facts(self, opponent).contains(TechniqueSelector.CombatFact.TARGET_DOWNED);
     }
 
+    /** 失败信息用：大脑现在认谁当对手（是什么、在哪、多远）、在不在指挥。别的包里的用例也能调。 */
+    public static String engagement(Villager villager) {
+        return "；对手=" + HumanoidBrain.opponent(villager).map(opponent -> opponent.getType().toShortString()
+                + " 在 " + opponent.blockPosition().toShortString() + " 相距 " + villager.distanceTo(opponent))
+                + " 大脑在指挥=" + HumanoidBrain.directing(villager);
+    }
+
     /** 失败信息用：这个村民的大脑最近做了哪些决策、带没带着不退。别的包里的用例也能调。 */
     public static String trail(Villager villager) {
         List<String> recent = HumanoidBrain.decisions(villager.getUUID()).stream()
@@ -274,36 +283,45 @@ public final class FistMasterDutyGameTest {
     }
 
     private static Villager fistMaster(GameTestHelper context, BlockPos relative, Husk opponent, String technique) {
-        // 开着 AI 的游炁拳师，真元补满，并且放得出这条用例要看的那一式：开了手经的游炁村民里，
-        // 约一成装不下撩天的花费、约两成装不下背摔的，那样的身体对着盾或被围时只能出别的式，不是这里要看的。
+        // 开着 AI 的游炁拳师。袖手拳只靠肌肉，出生是什么样就是什么样：不挑开了哪些经脉、不补真元，
+        // 上卷三式都该放得出，放不出就是用例环境坏了。
         // 原版会把没有工作站点、又没做过买卖的村民打回无业，给一点交易经验职业才留得住。
-        for (int attempt = 0; attempt < BIRTH_ATTEMPTS; attempt++) {
-            Villager master = villager(context, HumanoidTier.WANDERING_QI, relative, false /* idle */, Optional.empty());
-            HumanoidDuties.ensureOpened(master, HAND_MERIDIAN);
-            fillQi(context, master);
-            if (candidates(master, opponent).contains(technique)) {
-                // 先不开 AI：等对手都盯上它、职守也挂好了再放开，免得第一次决策时还不算被围、还没上任。
-                master.setNoAi(true /* aiDisabled */);
-                master.setVillagerXp(1);
-                employ(context, master, FIST_MASTER);
-                return master;
-            }
-            master.discard();
-        }
-        throw context.assertionException(Component.literal("连出 " + BIRTH_ATTEMPTS + " 个村民都放不出 " + technique));
+        Villager master = villager(context, HumanoidTier.WANDERING_QI, relative, false /* idle */, Optional.empty());
+        List<String> castable = candidates(master, opponent);
+        context.assertTrue(castable.contains(technique), "游炁拳师放不出 " + technique + "：" + castable);
+        // 先不开 AI：等对手都盯上它、职守也挂好了再放开，免得第一次决策时还不算被围、还没上任。
+        master.setNoAi(true /* aiDisabled */);
+        master.setVillagerXp(1);
+        employ(context, master, FIST_MASTER);
+        return master;
+    }
+
+    private static Villager recruit(GameTestHelper context, BlockPos spot, List<Husk> opponents, String technique) {
+        // 招一个当场放得出这一式的拳师站到这个位置，让这里的对手都盯上它。
+        Villager master = fistMaster(context, spot, opponents.getFirst(), technique);
+        opponents.forEach(husk -> husk.setTarget(master));
+        return master;
+    }
+
+    private static List<String> castsSoFar(GameTestHelper context, Villager master, Map<String, String> casts) {
+        // 开打以后才看；返回到现在出过的袖手拳，按先后。
+        context.assertTrue(!master.isNoAi(), "拳师还没开打");
+        watch(master, casts);
+        return new ArrayList<>(casts.values());
     }
 
     private static void wake(GameTestHelper context, List<Villager> masters) {
         // 对手设好目标、上任处理完以后再开 AI，拳师的第一次决策看到的就是摆好的局面。
         context.runAfterDelay(WAKE_TICKS, () -> masters.forEach(master -> {
             context.assertTrue(HumanoidDuties.standsGround(master), "开打前拳师还没上任");
-            // 上任时保底补开的第二条手经是空的，费用摊到它头上就付不起；开打前再补满一次。
-            fillQi(context, master);
+            // 开打那一刻大脑读到的状况和候选记下来：第一式选错时看得出当时是哪一式不在候选里。
+            AT_WAKE.put(master.getUUID(), diagnosis(master) + " 被围=" + HumanoidThreats.surrounded(master)
+                    + " 位置=" + master.position());
             master.setNoAi(false /* aiDisabled */);
         }));
     }
 
-    private static List<String> candidates(Villager villager, Husk opponent) {
+    static List<String> candidates(Villager villager, LivingEntity opponent) {
         // 大脑现在把哪几式算成对这个对手的打击式候选（绑得上、付得起、做得动）。
         var body = BodyProtobuf.fromMessage(body(villager));
         return HumanoidRepertoires.read(villager, body, Optional.of(new HumanoidOpponent(opponent, Optional.empty())),
@@ -317,19 +335,6 @@ public final class FistMasterDutyGameTest {
                 HumanoidWayfarerWeapons.inspect(villager).getMainHandSide()).hasBinding();
     }
 
-    /** 把真元补满：出生时真元多少是抽的，少的那些连一式都付不起；看打法的用例不想碰这个运气。别的包里的用例也能调。 */
-    public static void fillQi(GameTestHelper context, Villager villager) {
-        // 目标写成选择器、从村民脚下执行：直接写 UUID 会被命令树当成「执行者自己的经脉名」，
-        // 控制台执行时整条命令失败，什么也没补。命令报告补了几个目标，不是 1 就算没补上。
-        var server = context.getLevel().getServer();
-        int[] filled = {0};
-        var source = server.createCommandSourceStack().withLevel(context.getLevel())
-                .withPosition(villager.position()).withSuppressedOutput()
-                .withCallback((success, result) -> filled[0] = result);
-        server.getCommands().performPrefixedCommand(source, "meridian qi fill " + NEAREST_VILLAGER);
-        context.assertTrue(filled[0] == 1, "真元没有补进去：命令报告补了 " + filled[0] + " 个目标");
-    }
-
     private static BodyMessages.BodySnapshot body(Villager villager) {
         return HumanoidTechniqueHost.prepare(villager).body().snapshot();
     }
@@ -340,7 +345,7 @@ public final class FistMasterDutyGameTest {
                 .withProfession(context.getLevel().registryAccess(), profession));
     }
 
-    private static Villager villager(GameTestHelper context, HumanoidTier tier, BlockPos relative, boolean idle,
+    static Villager villager(GameTestHelper context, HumanoidTier tier, BlockPos relative, boolean idle,
                                      Optional<Boolean> hand) {
         // 指定档位出生再加入世界；idle 的不开 AI，只看上任撤任。
         // 游炁村民大约五个里有一个一条手经都没开。hand 写了的话只要「开着手经」或「没开手经」的那种，不合的丢掉重出。
@@ -378,7 +383,7 @@ public final class FistMasterDutyGameTest {
         return opened;
     }
 
-    private static Husk dummy(GameTestHelper context, BlockPos relative) {
+    static Husk dummy(GameTestHelper context, BlockPos relative) {
         // 不动、不出声的高血量尸壳，只当敌意来源。
         Husk husk = context.spawn(EntityTypes.HUSK, relative);
         husk.setNoAi(true /* aiDisabled */);

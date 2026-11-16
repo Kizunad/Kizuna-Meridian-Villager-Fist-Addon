@@ -16,7 +16,7 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.npc.villager.Villager;
 
 /**
- * 拳师的上任和撤任：村民成了拳师，就学上卷和中卷、保底开两条手经、把两臂练到位、挂上「不退」和「守村」；
+ * 拳师的上任和撤任：村民成了拳师，就学上卷和中卷、保底开一条手经、把两臂练到位、挂上「不退」和「守村」；
  * 不再是拳师就撤掉「不退」和「守村」，开的脉和练出来的两臂留着。只撤本仓上任时挂的：别处给村民挂的职守不归这里管。
  *
  * <p>职守挂在 Threatening 的公开入口上，本仓只决定什么时候挂、数值是多少。凡人拳师不任职，只做买卖。</p>
@@ -28,8 +28,6 @@ public final class FistMasterDuty {
     private static final String OUTER_VOLUME = VillagerFistFabric.MOD_ID + ":outer";
     private static final String INNER_VOLUME = VillagerFistFabric.MOD_ID + ":inner";
     private static final String HAND_MERIDIAN = "human:hand_meridian";
-    /** 上任时保底开着的手经条数：上卷三式要一条，中卷两式要两条。 */
-    static final int HAND_MERIDIANS = 2;
     /** 本仓上任过的记号，随实体存档；撤任只认带着它的村民。 */
     static final String APPOINTED_TAG = VillagerFistFabric.MOD_ID + ".fist_master_appointed";
     /** 职业变过、或刚进世界，还没对过职守的村民；不持有实体，实体没了自然消失。 */
@@ -99,9 +97,9 @@ public final class FistMasterDuty {
         // 拳师传到中卷，接着学中卷（前置是上卷，所以排在后面）。
         TechniqueFabric.service().learn(villager.getUUID(), OUTER_VOLUME);
         TechniqueFabric.service().learn(villager.getUUID(), INNER_VOLUME);
-        // 上卷三式要一条开了的手经，中卷两式要两条；游炁村民开脉少，有的一条都没开，
-        // 当了拳师就保底开到两条，算他练过。
-        if (!HumanoidDuties.ensureOpened(villager, HAND_MERIDIAN, HAND_MERIDIANS)
+        // 中卷是内家，要开着一条手经才使得出（不花真元）。游炁村民开脉少，有的一条手经都没开：
+        // 当了拳师就保底开一条，不然他教的中卷自己使不出。上卷不靠它。
+        if (!HumanoidDuties.ensureOpened(villager, HAND_MERIDIAN)
                 || !HumanoidDuties.trainArms(villager, WANDERING_QI_ARM_GROWTH, TRUE_QI_ARM_GROWTH)) {
             return false;
         }

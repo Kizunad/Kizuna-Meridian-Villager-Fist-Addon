@@ -30,6 +30,8 @@ import static org.junit.Assert.assertTrue;
 
 /** 发行目录经正式 Human 内容和功法库校验器注册，逐式对照 C7 SPEC 第三、六节的表。 */
 public final class VillagerFistCatalogTest {
+    private static final int ALL_TECHNIQUES = 6;
+    private static final String HAND_MERIDIAN = "human:hand_meridian";
     private static final String BOOK = "meridian_villager:sleeve_fist";
     private static final String OUTER = "meridian_villager:outer";
     private static final String CRUSHING_FIST = "meridian_villager:crushing_fist";
@@ -42,7 +44,6 @@ public final class VillagerFistCatalogTest {
     private static final String INCH_POWER = "meridian_villager:inch_power";
     private static final String WRIST_LOCK = "meridian_villager:wrist_lock";
     private static final List<String> INNER_TECHNIQUES = List.of(INCH_POWER, WRIST_LOCK);
-    private static final int INNER_HAND_MERIDIANS = 2;
     private static final String INCH_TYPE = "meridian_villager:inch_power";
     private static final long INCH_MILLIS = 1_450;
     private static final double INCH_MULTIPLIER = 1.6;
@@ -78,7 +79,6 @@ public final class VillagerFistCatalogTest {
     private static final double SCROLL_CHANCE = 0.25;
     private static final int ARM_MUSCLES = 6;
     private static final int LEG_MUSCLES = 6;
-    private static final int MAXIMUM_HAND_MERIDIANS = 6;
     private static final double FIGHT_MOVEMENT = 0.4;
     private static final double LIFT_SPEED = 8;
     private static final String DRILL_PROCESSOR = "meridian_villager:dummy_drill";
@@ -123,7 +123,7 @@ public final class VillagerFistCatalogTest {
 
     @Test
     public void innerVolumeNeedsTheOuterAndHasNoScroll() throws IOException {
-        // 中卷：寸劲、缠腕，前置上卷，只在武馆传所以不生成卷轴、不掉落；两式都要两条开了的手经。
+        // 中卷：寸劲、缠腕，前置上卷，只在武馆传所以不生成卷轴、不掉落。
         TechniqueRegistry registry = VillagerFistContent.registry();
         var inner = registry.findVolume(INNER).orElseThrow();
         assertEquals(BOOK, inner.getBookId());
@@ -135,7 +135,6 @@ public final class VillagerFistCatalogTest {
             TechniqueDefinition definition = registry.findLatest(id).orElseThrow();
             assertEquals(id, Category.ATTACK, definition.getCategory());
             assertEquals(id, FIGHT_MOVEMENT, definition.getMovementSpeedMultiplier(), TOLERANCE);
-            assertEquals(id, INNER_HAND_MERIDIANS, slot(definition, "hand_meridians").getMinimumCount());
         }
     }
 
@@ -193,22 +192,44 @@ public final class VillagerFistCatalogTest {
     }
 
     @Test
-    public void strikesUseHandMeridiansAndBothLimbGroups() throws IOException {
-        // 崩拳、撩天：游炁起，手经 1–6 条要已开，两臂、两腿各 6 块肌肉，限速 0.4，都是进攻式。
+    public void strikesUseBothLimbGroups() throws IOException {
+        // 崩拳、撩天：游炁起，两臂、两腿各 6 块肌肉，限速 0.4，都是进攻式。
         TechniqueRegistry registry = VillagerFistContent.registry();
         for (String id : STRIKES.keySet()) {
             TechniqueDefinition definition = registry.findLatest(id).orElseThrow();
             assertEquals(id, Category.ATTACK, definition.getCategory());
             assertEquals(id, Realm.WANDERING_QI, definition.getMinimumRealm());
             assertEquals(id, FIGHT_MOVEMENT, definition.getMovementSpeedMultiplier(), TOLERANCE);
-            TechniqueSlot hand = slot(definition, "hand_meridians");
-            assertEquals(ModuleKind.MERIDIAN, hand.getModule());
-            assertEquals(List.of("human:hand_meridian"), hand.getTagsList());
-            assertEquals(1, hand.getMinimumCount());
-            assertEquals(MAXIMUM_HAND_MERIDIANS, hand.getMaximumCount());
-            assertTrue(hand.getRequireOpened());
             assertMuscles(slot(definition, "arm_muscles"), "human:arm_muscle", ARM_MUSCLES);
             assertMuscles(slot(definition, "leg_muscles"), "human:leg_muscle", LEG_MUSCLES);
+        }
+    }
+
+    @Test
+    public void noTechniqueSpendsQiAndOnlyTheInnerVolumeAsksForAnOpenedHandMeridian() throws IOException {
+        // 袖手拳是拳法，只靠肌肉：每一式都不扣真元，打人的式都有肌肉做功。
+        // 上卷外家不占经脉槽，一条经都没开的凡人也使得出；中卷内家要开着一条手经（只当门槛，不扣真元）。
+        TechniqueRegistry registry = VillagerFistContent.registry();
+        List<String> all = registry.definitions().stream().map(TechniqueDefinition::getId).toList();
+        assertEquals(ALL_TECHNIQUES, all.size());
+        for (String id : all) {
+            TechniqueDefinition definition = registry.findLatest(id).orElseThrow();
+            assertTrue(id + " 还在扣真元", definition.getCost().getQiList().isEmpty());
+            List<TechniqueSlot> meridians = definition.getSlotsList().stream()
+                    .filter(slot -> slot.getModule() == ModuleKind.MERIDIAN).toList();
+            if (INNER_TECHNIQUES.contains(id)) {
+                assertEquals(id + " 应当只有一个手经门槛", 1, meridians.size());
+                TechniqueSlot gate = meridians.getFirst();
+                assertEquals(id, List.of(HAND_MERIDIAN), gate.getTagsList());
+                assertEquals(id, 1, gate.getMinimumCount());
+                assertEquals(id, 1, gate.getMaximumCount());
+                assertTrue(id + " 的手经门槛没要求开着", gate.getRequireOpened());
+            } else {
+                assertTrue(id + " 还占着经脉槽", meridians.isEmpty());
+            }
+            if (definition.getCategory() == Category.ATTACK) {
+                assertTrue(id + " 没有肌肉做功", !definition.getCost().getWorkList().isEmpty());
+            }
         }
     }
 

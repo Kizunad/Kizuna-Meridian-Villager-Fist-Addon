@@ -54,7 +54,6 @@ public final class VillagerInnerClientTest implements FabricClientGameTest {
     private static final String SPAWN = "meridian humanoid spawn minecraft:villager true_qi %.1f %.1f %.1f";
     private static final String VINDICATOR_SPAWN =
             "meridian humanoid spawn minecraft:vindicator wandering_qi %.1f %.1f %.1f";
-    private static final String NEAREST_VILLAGER = "@e[type=minecraft:villager,limit=1,sort=nearest]";
     private static final String INCH_POWER = "meridian_villager:inch_power";
     private static final String WRIST_LOCK = "meridian_villager:wrist_lock";
     private static final int CLEAR_RADIUS = 16;
@@ -67,7 +66,7 @@ public final class VillagerInnerClientTest implements FabricClientGameTest {
     private static final Vec3 CAMERA_TARGET = new Vec3(0.5, 1.1, 1.3);
     private static final double EYE_HEIGHT = 1.62;
     private static final float FOE_FACING_CASTER = 180;
-    /** 村民出生时开了几条手经是抽的，中卷两式要两条；起不成就换一个再来，最多换这么多个。 */
+    /** 村民出生时开了几条手经是抽的，中卷两式要开着一条；起不成就换一个再来，最多换这么多个。 */
     private static final int CASTER_ATTEMPTS = 12;
     private static final int LEAD_FRAMES = 10;
     private static final boolean CLEAR_SENT_HISTORY = false;
@@ -188,7 +187,7 @@ public final class VillagerInnerClientTest implements FabricClientGameTest {
     }
 
     private static Villager caster(MinecraftServer server, Vec3 feet) {
-        // 用正式的生成命令出生一个真炁村民（学卷表发上、中两卷），面朝南站定、不开 AI，真元补满。
+        // 用正式的生成命令出生一个真炁村民（学卷表发上、中两卷），面朝南站定、不开 AI。
         Villager villager = spawn(server, SPAWN, feet, Villager.class);
         villager.setNoAi(true /* aiDisabled */);
         villager.setPersistenceRequired();
@@ -197,10 +196,6 @@ public final class VillagerInnerClientTest implements FabricClientGameTest {
         villager.setOnGround(true /* onGround */);
         villager.setYHeadRot(0);
         villager.setYBodyRot(0);
-        // 补真元的目标要写成选择器、从村民脚下执行：直接写 UUID 会被命令树当成「执行者自己的经脉名」，什么也不补。
-        var source = server.createCommandSourceStack().withLevel(server.overworld())
-                .withPosition(villager.position()).withSuppressedOutput();
-        server.getCommands().performPrefixedCommand(source, "meridian qi fill " + NEAREST_VILLAGER);
         return villager;
     }
 
@@ -219,7 +214,7 @@ public final class VillagerInnerClientTest implements FabricClientGameTest {
     }
 
     private static String start(MinecraftServer server, Villager[] caster, Vec3 feet, String technique) {
-        // 替村民起式；这个村民起不成（多半是手经没开够两条）就换一个再来。
+        // 替村民起式；这个村民起不成（中卷要开着一条手经，他多半一条没开）就换一个再来。
         String outcome = "";
         for (int attempt = 0; attempt < CASTER_ATTEMPTS; attempt++) {
             outcome = cast(caster[0], technique);
