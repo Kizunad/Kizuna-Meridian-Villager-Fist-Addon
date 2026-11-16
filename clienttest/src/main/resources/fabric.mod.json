@@ -1,0 +1,11 @@
+{
+  "schemaVersion": 1,
+  "id": "meridian_villager_clienttest",
+  "version": "1.0.0",
+  "name": "袖手拳客户端连拍",
+  "environment": "client",
+  "entrypoints": {
+    "fabric-client-gametest": ["dev.kizuna.meridian.villager.clienttest.VillagerInnerClientTest"]
+  },
+  "depends": {"fabric-api": "*", "meridian_villager": "*", "meridian_humanoid_host": "*", "meridian_technique": "*"}
+}

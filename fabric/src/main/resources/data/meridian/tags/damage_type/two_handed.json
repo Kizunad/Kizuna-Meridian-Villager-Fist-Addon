@@ -2,6 +2,7 @@
   "replace": false,
   "values": [
     "meridian_villager:fist_both_torso",
-    "meridian_villager:throw"
+    "meridian_villager:throw",
+    "meridian_villager:joint_lock"
   ]
 }

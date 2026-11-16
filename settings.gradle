@@ -9,7 +9,7 @@ pluginManagement {
 // 相邻仓库位置、产物路径与第三方版本都由 Framework 的工作区脚本提供（kizunaWorkspace、libs）。
 apply from: new File(rootDir.parentFile, 'Kizuna-Meridian-Mod-Framework/scripts/workspace.gradle')
 rootProject.name = 'kizuna-meridian-villager-fist-addon'
-include 'shared', 'fabric', 'verification', 'gametest'
+include 'shared', 'fabric', 'verification', 'gametest', 'clienttest'
 
 // 编译、目录验证与 GameTest 直接使用相邻仓库的当前源码。local.meridian 是框架的本地替换键；
 // GameTest 按坐标装入 Human 等模组时 Loom 以框架真实坐标重新加入其传递库，所以真实坐标也登记替换。

@@ -31,6 +31,10 @@ public final class VillagerFistResourcesTest {
     /** 拳掌伤害进 Damage 的钝击、近战、打躯干三条标签；双手的另进 two_handed。 */
     private static final List<String> STRIKE_TAGS = List.of("kind/blunt", "melee", "aim/torso");
     private static final String TWO_HANDED_TAG = "two_handed";
+    private static final String OFF_HAND_TAG = "off_hand";
+    private static final String TORSO_TAG = "aim/torso";
+    private static final String INCH_TYPE = PREFIX + "inch_power";
+    private static final String LOCK_TYPE = PREFIX + "joint_lock";
     private static final String BOTH_ARMS_TYPE = PREFIX + "fist_both_torso";
     /** 背摔落地和一靠：双手、打躯干。 */
     private static final String THROW_TYPE = PREFIX + "throw";
@@ -58,20 +62,35 @@ public final class VillagerFistResourcesTest {
 
     @Test
     public void catalogDamageTypesAreRegisteredAndTagged() throws IOException {
-        // 目录引用的每个伤害类型在本仓注册，进钝击、近战、躯干标签；双手出拳和背摔进 two_handed。
-        // 背摔落地砸在原地，原版受伤时的击退不要（一靠的推开另走 knockback），所以只有它进原版 no_knockback。
+        // 目录引用的每个伤害类型在本仓注册，进钝击、近战标签；打躯干的进躯干标签，缠腕点名打前臂所以不进。
+        // 双手出拳、背摔、缠腕进 two_handed；寸劲用前手，进 off_hand。
         Set<String> used = damageTypes(VillagerFistContent.catalog());
-        assertEquals(Set.of(PREFIX + "fist_rear_torso", BOTH_ARMS_TYPE, THROW_TYPE), used);
+        assertEquals(Set.of(PREFIX + "fist_rear_torso", BOTH_ARMS_TYPE, THROW_TYPE, INCH_TYPE, LOCK_TYPE), used);
         for (String type : used) {
             assertTrue(type, Files.isRegularFile(resource(DATA + "damage_type/" + local(type) + ".json")));
             for (String tag : STRIKE_TAGS) {
-                assertTrue(type + " 缺 " + tag, damageTag(tag).contains(type));
+                boolean expected = !tag.equals(TORSO_TAG) || !type.equals(LOCK_TYPE);
+                assertEquals(type + " 的 " + tag, expected, damageTag(tag).contains(type));
             }
         }
-        assertEquals(Set.of(BOTH_ARMS_TYPE, THROW_TYPE), damageTag(TWO_HANDED_TAG));
-        JsonObject noKnockback = json("data/minecraft/tags/damage_type/no_knockback.json");
-        assertFalse(noKnockback.get("replace").getAsBoolean());
-        assertEquals(Set.of(THROW_TYPE), values(noKnockback));
+        assertEquals(Set.of(BOTH_ARMS_TYPE, THROW_TYPE, LOCK_TYPE), damageTag(TWO_HANDED_TAG));
+        assertEquals(Set.of(INCH_TYPE), damageTag(OFF_HAND_TAG));
+    }
+
+    @Test
+    public void vanillaDamageTagsOnlyAppendTheTypesThatNeedThem() throws IOException {
+        // 原版标签都是追加（replace=false）。背摔落地、寸劲、缠腕不要原版受伤击退；
+        // 缠腕两下拧隔不到一秒，要越过无敌帧；拿的是手腕，举着盾也照样拧。
+        assertEquals(Set.of(THROW_TYPE, INCH_TYPE, LOCK_TYPE), appended("no_knockback"));
+        assertEquals(Set.of(LOCK_TYPE), appended("bypasses_cooldown"));
+        assertEquals(Set.of(LOCK_TYPE), appended("bypasses_shield"));
+    }
+
+    private static Set<String> appended(String vanillaTag) throws IOException {
+        // 读本仓往原版伤害标签里追加的值，顺带确认没有整个替换掉原版标签。
+        JsonObject tag = json("data/minecraft/tags/damage_type/" + vanillaTag + ".json");
+        assertFalse(vanillaTag, tag.get("replace").getAsBoolean());
+        return values(tag);
     }
 
     @Test

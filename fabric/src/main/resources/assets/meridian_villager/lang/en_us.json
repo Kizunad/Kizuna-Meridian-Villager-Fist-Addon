@@ -11,16 +11,22 @@
   "book.meridian_villager.sleeve_fist": "Sleeve Fist",
   "book.meridian_villager.sleeve_fist.note": "Bare hands, whatever you hold; strike standing or in mid-air.",
   "volume.meridian_villager.outer": "Outer Form",
+  "volume.meridian_villager.inner": "Inner Form",
   "technique.meridian_villager.crushing_fist": "Crushing Fist",
   "technique.meridian_villager.crushing_fist.note": "a rear-hand punch straight to the chest that drives the foe back",
   "technique.meridian_villager.golem_lift": "Golem Lift",
   "technique.meridian_villager.golem_lift.note": "both arms swing upward and heave the foe off the ground",
   "technique.meridian_villager.shoulder_throw": "Shoulder Throw",
   "technique.meridian_villager.shoulder_throw.note": "seize the foe, turn, and heave them over the shoulder to land behind you",
+  "technique.meridian_villager.inch_power": "Inch Power",
+  "technique.meridian_villager.inch_power.note": "a lead-hand shudder from an inch away that sinks into the organs; armor stops only half of it",
+  "technique.meridian_villager.wrist_lock": "Wrist Lock",
+  "technique.meridian_villager.wrist_lock.note": "seize the weapon wrist and wrench it twice; the arm goes numb and the weapon drops",
   "technique.meridian_villager.dummy_drill": "Dummy Drill",
   "technique.meridian_villager.dummy_drill.note": "strike a wooden dummy, log, hay bale or dummy figure; the arms grow tireless",
   "advancements.meridian_villager.cultivators.sleeve_fist.title": "Village Drills",
   "advancements.meridian_villager.cultivators.sleeve_fist.description": "Beating the wooden post day and night turns arms to iron. Fists snap straight like bows, golem lifts toss men over eaves, and shoulders throw them flat on the dirt.",
   "codex.intro.meridian_villager.sleeve_fist": "An external fist handed down by village gates: springing forward like a bow, lifting men skyward like an iron golem, or tossing them over the shoulder like a sheaf of wheat.",
-  "codex.power.meridian_villager.outer": "Fists snap out like bowstrings. Lift both arms to hoist a foe clean overhead, or step inside to hook their weight over your shoulder and slam them flat."
+  "codex.power.meridian_villager.outer": "Fists snap out like bowstrings. Lift both arms to hoist a foe clean overhead, or step inside to hook their weight over your shoulder and slam them flat.",
+  "codex.power.meridian_villager.inner": "A sharp burst from a mere inch away penetrates armor to strike the vitals within; twisting the wrist and pressing the elbow numbs the foe's arm, wrenching their weapon to the ground."
 }

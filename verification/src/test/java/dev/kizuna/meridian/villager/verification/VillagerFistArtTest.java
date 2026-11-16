@@ -43,12 +43,15 @@ public final class VillagerFistArtTest {
 
     @Test
     public void scrollsBackgroundsAndTechniqueIconsCoverTheCatalog() throws IOException {
-        // 卷轴物品 ID 是 <卷>_scroll，背景按卷路径取；每式 icon_id 与式 ID 同名，带 32 和 64 两档。
+        // 卷轴物品 ID 是 <卷>_scroll（不生成卷轴的卷没有这张图），背景按卷路径取；
+        // 每式 icon_id 与式 ID 同名，带 32 和 64 两档。
         TechniqueCatalog catalog = VillagerFistContent.catalog();
         assertTrue(catalog.getVolumesCount() > 0);
         for (var volume : catalog.getVolumesList()) {
             String path = volume.getId().substring(PREFIX.length());
-            assertImage(TEXTURES + "item/" + path + "_scroll.png", SCROLL_PIXELS, SCROLL_PIXELS);
+            if (!volume.hasScrollItem() || volume.getScrollItem()) {
+                assertImage(TEXTURES + "item/" + path + "_scroll.png", SCROLL_PIXELS, SCROLL_PIXELS);
+            }
             assertImage(TEXTURES + "gui/scroll/" + path + ".png", BACKGROUND_WIDTH, BACKGROUND_HEIGHT);
         }
         for (TechniqueDefinition definition : catalog.getDefinitionsList()) {

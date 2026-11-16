@@ -84,7 +84,7 @@ public final class Grapples {
     }
 
     private static void grab(LivingEntity caster, EffectIntent intent) {
-        // 擒空了这一式照常走完；摔不动的不擒，到点一靠；摔得动的锁住并当场拉到身前。
+        // 擒空了这一式照常走完；摔不动的不擒，声明了一靠的到点一靠；摔得动的锁住并当场拉到身前。
         Grapple grapple = intent.getGrapple().getGrapple();
         Optional<LivingEntity> found = GrappleTargets.find(caster, intent.getTargetId(),
                 grapple.getMaximumDistance().getValue());
@@ -95,6 +95,10 @@ public final class Grapples {
         long now = now(caster);
         double base = intent.getGrapple().getArmRules().getBaseDamage().getValue();
         if (!Throwables.throwable(target)) {
+            if (!grapple.hasLean()) {
+                // 没声明一靠的式（缠腕）：摔不动的不擒也不靠，后面的拧照常打。
+                return;
+            }
             ThrowLean lean = grapple.getLean();
             GrappleStrike strike = GrappleStrike.of(intent, lean.getDamageTypeId(),
                     base * lean.getMultiplier().getValue());

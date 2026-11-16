@@ -11,16 +11,22 @@
   "book.meridian_villager.sleeve_fist": "袖手拳",
   "book.meridian_villager.sleeve_fist.note": "手里拿什么都行；站着、跳起来都出得了拳",
   "volume.meridian_villager.outer": "外家",
+  "volume.meridian_villager.inner": "内家",
   "technique.meridian_villager.crushing_fist": "崩拳",
   "technique.meridian_villager.crushing_fist.note": "后手一拳直送心口，把人往后打退",
   "technique.meridian_villager.golem_lift": "撩天",
   "technique.meridian_villager.golem_lift.note": "两臂往上一抡，把人掀离地面",
   "technique.meridian_villager.shoulder_throw": "背摔",
   "technique.meridian_villager.shoulder_throw.note": "抓住对方，转身扛起，从肩上翻过去摔在身后",
+  "technique.meridian_villager.inch_power": "寸劲",
+  "technique.meridian_villager.inch_power.note": "前手贴身一抖，劲透进脏腑，披的甲只挡得住一半",
+  "technique.meridian_villager.wrist_lock": "缠腕",
+  "technique.meridian_villager.wrist_lock.note": "拿住对方拿家伙的手腕拧两下，那条胳膊发麻，家伙脱手",
   "technique.meridian_villager.dummy_drill": "打木桩",
   "technique.meridian_villager.dummy_drill.note": "对着木人桩、原木、草垛或假人打，两臂越打越耐久",
   "advancements.meridian_villager.cultivators.sleeve_fist.title": "村中把式",
   "advancements.meridian_villager.cultivators.sleeve_fist.description": "日夜拍打木桩练得臂膀如铁，崩拳如弓弦直发，两臂撩人过檐，近身更能扛肩摔翻。",
   "codex.intro.meridian_villager.sleeve_fist": "村口传下的外家拳法，有如崩弓发劲，学铁傀儡撩臂掀人，亦能架肩如扛麦捆般摔敌。",
-  "codex.power.meridian_villager.outer": "拳如弓弦直崩，两臂上抡能将敌手掀起凌空，更能近身架肩借力重重砸翻在地。"
+  "codex.power.meridian_villager.outer": "拳如弓弦直崩，两臂上抡能将敌手掀起凌空，更能近身架肩借力重重砸翻在地。",
+  "codex.power.meridian_villager.inner": "近身一寸抖劲能隔甲透伤脏腑，刁腕压肘反拧不仅教敌前臂酸麻脱力，更能夺其兵刃砸落在地。"
 }

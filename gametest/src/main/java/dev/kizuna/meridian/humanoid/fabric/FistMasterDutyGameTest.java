@@ -61,6 +61,9 @@ public final class FistMasterDutyGameTest {
     private static final int TRAIL = 12;
     private static final int BIRTH_ATTEMPTS = 40;
     private static final String HAND_MERIDIAN = "human:hand_meridian";
+    private static final String NEAREST_VILLAGER = "@e[type=minecraft:villager,limit=1,sort=nearest]";
+    private static final int APPOINTED_HANDS = 2;
+    private static final String INCH_POWER = "meridian_villager:inch_power";
     private static final String FOOT_MERIDIAN = "human:foot_meridian";
     private static final int SHIELD_UP_TICKS = 10;
     private static final int WAKE_TICKS = 10;
@@ -73,7 +76,8 @@ public final class FistMasterDutyGameTest {
 
     @GameTest(maxTicks = APPOINT_TIMEOUT)
     public void villagerTakingTheJobIsAppointedAndLeavingItDismissed(GameTestHelper context) {
-        // 一条手经都没开的游炁村民成了拳师：会上卷三式、保底开了一条手经（崩拳因此绑得上）、两臂训练成长到位、挂上不退；
+        // 一条手经都没开的游炁村民成了拳师：会上卷三式和中卷、保底开了两条手经（崩拳、寸劲因此绑得上）、
+        // 两臂训练成长到位、挂上不退；
         // 不再是拳师，不退撤掉，开的脉和练出来的两臂留着。凡人成了拳师不任职。都不开 AI，职业由用例直接改。
         // 第三个村民不是拳师，「不退」「守村」是别处给他挂的：本仓对职守时不动他的。
         Villager master = villager(context, HumanoidTier.MORTAL, new BlockPos(2, 2, 2), true /* idle */,
@@ -98,6 +102,8 @@ public final class FistMasterDutyGameTest {
             context.assertTrue(HumanoidDuties.standsGround(master) && HumanoidDuties.guardsVillage(master),
                     "拳师上任后没有挂上不退和守村");
             context.assertTrue(handOpened(master) && bindable(master, CRUSHING_FIST), "拳师上任后还是用不了拳");
+            context.assertTrue(handsOpened(master) == APPOINTED_HANDS && bindable(master, INCH_POWER),
+                    "拳师上任后应保底开着两条手经、绑得上中卷的寸劲，实际开了 " + handsOpened(master));
             verifyArms(context, master, before, WANDERING_QI_GROWTH);
             List<String> known = TechniqueFabric.service().known(master.getUUID()).stream()
                     .map(entry -> entry.technique().getId()).toList();
@@ -112,7 +118,7 @@ public final class FistMasterDutyGameTest {
             context.runAfterDelay(SETTLE_TICKS, () -> {
                 context.assertTrue(!HumanoidDuties.standsGround(master) && !HumanoidDuties.guardsVillage(master),
                         "不再是拳师，不退和守村没有撤掉");
-                context.assertTrue(handOpened(master), "不再是拳师，开的手经不该收回");
+                context.assertTrue(handsOpened(master) == APPOINTED_HANDS, "不再是拳师，开的手经不该收回");
                 verifyArms(context, master, before, WANDERING_QI_GROWTH);
                 master.discard();
                 mortal.discard();
@@ -291,6 +297,8 @@ public final class FistMasterDutyGameTest {
         // 对手设好目标、上任处理完以后再开 AI，拳师的第一次决策看到的就是摆好的局面。
         context.runAfterDelay(WAKE_TICKS, () -> masters.forEach(master -> {
             context.assertTrue(HumanoidDuties.standsGround(master), "开打前拳师还没上任");
+            // 上任时保底补开的第二条手经是空的，费用摊到它头上就付不起；开打前再补满一次。
+            fillQi(context, master);
             master.setNoAi(false /* aiDisabled */);
         }));
     }
@@ -311,9 +319,15 @@ public final class FistMasterDutyGameTest {
 
     /** 把真元补满：出生时真元多少是抽的，少的那些连一式都付不起；看打法的用例不想碰这个运气。别的包里的用例也能调。 */
     public static void fillQi(GameTestHelper context, Villager villager) {
+        // 目标写成选择器、从村民脚下执行：直接写 UUID 会被命令树当成「执行者自己的经脉名」，
+        // 控制台执行时整条命令失败，什么也没补。命令报告补了几个目标，不是 1 就算没补上。
         var server = context.getLevel().getServer();
-        var source = server.createCommandSourceStack().withLevel(context.getLevel()).withSuppressedOutput();
-        server.getCommands().performPrefixedCommand(source, "meridian qi fill " + villager.getStringUUID());
+        int[] filled = {0};
+        var source = server.createCommandSourceStack().withLevel(context.getLevel())
+                .withPosition(villager.position()).withSuppressedOutput()
+                .withCallback((success, result) -> filled[0] = result);
+        server.getCommands().performPrefixedCommand(source, "meridian qi fill " + NEAREST_VILLAGER);
+        context.assertTrue(filled[0] == 1, "真元没有补进去：命令报告补了 " + filled[0] + " 个目标");
     }
 
     private static BodyMessages.BodySnapshot body(Villager villager) {
@@ -348,14 +362,20 @@ public final class FistMasterDutyGameTest {
 
     /** 这个村民的身体有没有至少一条开了的手经（袖手拳三式都要）。身体已经出生才能问。别的包里的用例也能调。 */
     public static boolean handOpened(Villager villager) {
+        return handsOpened(villager) > 0;
+    }
+
+    private static int handsOpened(Villager villager) {
+        // 开着的手经条数。
         BodyMessages.BodySnapshot body = ((HumanoidEntityAccess) villager).meridian$humanoidBody().snapshot();
+        int opened = 0;
         for (int index = 0; index < body.getMeridianStatesCount(); index++) {
             boolean hand = body.getStructure().getMeridians(index).getTagsList().contains(HAND_MERIDIAN);
             if (hand && body.getMeridianStates(index).getOpening().getStage() == MeridianOpeningStage.OPENED) {
-                return true;
+                opened++;
             }
         }
-        return false;
+        return opened;
     }
 
     private static Husk dummy(GameTestHelper context, BlockPos relative) {

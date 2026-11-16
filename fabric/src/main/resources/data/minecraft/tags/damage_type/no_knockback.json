@@ -1,6 +1,8 @@
 {
   "replace": false,
   "values": [
-    "meridian_villager:throw"
+    "meridian_villager:throw",
+    "meridian_villager:inch_power",
+    "meridian_villager:joint_lock"
   ]
 }

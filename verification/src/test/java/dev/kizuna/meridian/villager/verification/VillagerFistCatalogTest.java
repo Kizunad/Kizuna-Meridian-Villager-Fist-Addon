@@ -8,12 +8,14 @@ import dev.kizuna.meridian.technique.protocol.pb.TechniqueMessages.Grapple;
 import dev.kizuna.meridian.technique.protocol.pb.TechniqueMessages.LegKnockbackKind;
 import dev.kizuna.meridian.technique.protocol.pb.TechniqueMessages.LimbStrike;
 import dev.kizuna.meridian.technique.protocol.pb.TechniqueMessages.ModuleKind;
+import dev.kizuna.meridian.technique.protocol.pb.TechniqueMessages.Numb;
 import dev.kizuna.meridian.technique.protocol.pb.TechniqueMessages.ScrollDrop;
 import dev.kizuna.meridian.technique.protocol.pb.TechniqueMessages.TechniqueDefinition;
 import dev.kizuna.meridian.technique.protocol.pb.TechniqueMessages.TechniqueEffect;
 import dev.kizuna.meridian.technique.protocol.pb.TechniqueMessages.TechniqueSlot;
 import dev.kizuna.meridian.technique.protocol.pb.TechniqueMessages.Throw;
 import dev.kizuna.meridian.technique.protocol.pb.TechniqueMessages.WorkCost;
+import dev.kizuna.meridian.technique.server.TechniqueLimbStrikes;
 import dev.kizuna.meridian.technique.server.TechniqueRegistry;
 import org.junit.Test;
 
@@ -36,6 +38,24 @@ public final class VillagerFistCatalogTest {
     private static final String DUMMY_DRILL = "meridian_villager:dummy_drill";
     private static final List<String> OUTER_TECHNIQUES = List.of(CRUSHING_FIST, GOLEM_LIFT, SHOULDER_THROW,
             DUMMY_DRILL);
+    private static final String INNER = "meridian_villager:inner";
+    private static final String INCH_POWER = "meridian_villager:inch_power";
+    private static final String WRIST_LOCK = "meridian_villager:wrist_lock";
+    private static final List<String> INNER_TECHNIQUES = List.of(INCH_POWER, WRIST_LOCK);
+    private static final int INNER_HAND_MERIDIANS = 2;
+    private static final String INCH_TYPE = "meridian_villager:inch_power";
+    private static final long INCH_MILLIS = 1_450;
+    private static final double INCH_MULTIPLIER = 1.6;
+    private static final double INCH_REACH = 1.5;
+    private static final double INCH_ORGAN_SHARE = 0.6;
+    private static final double INCH_ARMOR = 0.5;
+    private static final String LOCK_TYPE = "meridian_villager:joint_lock";
+    private static final long LOCK_GRAPPLE_MILLIS = 900;
+    private static final long LOCK_HOLD_MILLIS = 1_600;
+    private static final List<Long> LOCK_TWIST_MILLIS = List.of(1_400L, 2_100L);
+    private static final List<Double> LOCK_MULTIPLIERS = List.of(0.6, 0.9);
+    private static final double NUMB_MULTIPLIER = 0.3;
+    private static final long NUMB_MILLIS = 6_000;
     private static final String GRAPPLE_PROCESSOR = "meridian_villager:grapple";
     private static final String THROW_TYPE = "meridian_villager:throw";
     private static final long GRAPPLE_MILLIS = 1_200;
@@ -86,11 +106,11 @@ public final class VillagerFistCatalogTest {
 
     @Test
     public void catalogRegistersOneBookWithTheOuterVolume() throws IOException {
-        // 一书一卷：三式打人加打木桩；上卷没有前置卷，生成卷轴并由村民掉落。
+        // 一书两卷。上卷：三式打人加打木桩，没有前置卷，生成卷轴并由村民掉落。
         TechniqueRegistry registry = VillagerFistContent.registry();
         assertEquals(1, registry.books().size());
         assertEquals(BOOK, registry.books().getFirst().getId());
-        assertEquals(1, registry.volumes().size());
+        assertEquals(2, registry.volumes().size());
         var outer = registry.findVolume(OUTER).orElseThrow();
         assertEquals(BOOK, outer.getBookId());
         assertEquals(OUTER_TECHNIQUES, outer.getTechniquesList().stream().map(reference -> reference.getId()).toList());
@@ -98,7 +118,70 @@ public final class VillagerFistCatalogTest {
         assertFalse("上卷要有卷轴", outer.hasScrollItem() && !outer.getScrollItem());
         var drop = ScrollDrop.newBuilder().setEntityType("minecraft:villager").setChance(SCROLL_CHANCE).build();
         assertEquals(List.of(drop), outer.getScrollDropsList());
-        assertEquals(OUTER_TECHNIQUES.size(), registry.definitions().size());
+        assertEquals(OUTER_TECHNIQUES.size() + INNER_TECHNIQUES.size(), registry.definitions().size());
+    }
+
+    @Test
+    public void innerVolumeNeedsTheOuterAndHasNoScroll() throws IOException {
+        // 中卷：寸劲、缠腕，前置上卷，只在武馆传所以不生成卷轴、不掉落；两式都要两条开了的手经。
+        TechniqueRegistry registry = VillagerFistContent.registry();
+        var inner = registry.findVolume(INNER).orElseThrow();
+        assertEquals(BOOK, inner.getBookId());
+        assertEquals(INNER_TECHNIQUES, inner.getTechniquesList().stream().map(reference -> reference.getId()).toList());
+        assertEquals(List.of(OUTER), inner.getPrerequisiteVolumeIdsList());
+        assertTrue("中卷不该有卷轴", inner.hasScrollItem() && !inner.getScrollItem());
+        assertTrue(inner.getScrollDropsList().isEmpty());
+        for (String id : INNER_TECHNIQUES) {
+            TechniqueDefinition definition = registry.findLatest(id).orElseThrow();
+            assertEquals(id, Category.ATTACK, definition.getCategory());
+            assertEquals(id, FIGHT_MOVEMENT, definition.getMovementSpeedMultiplier(), TOLERANCE);
+            assertEquals(id, INNER_HAND_MERIDIANS, slot(definition, "hand_meridians").getMinimumCount());
+        }
+    }
+
+    @Test
+    public void inchPowerSinksThroughArmorWithoutKnockback() throws IOException {
+        // 寸劲：1.45 s 前手一拳，×1.6，透劲六成、护甲只算一半，不击退，走直接路。
+        TechniqueDefinition definition = VillagerFistContent.registry().findLatest(INCH_POWER).orElseThrow();
+        TechniqueEffect effect = only(definition, TechniqueEffect::hasLimbStrike);
+        LimbStrike strike = effect.getLimbStrike();
+        assertEquals(INCH_MILLIS, effect.getAtMillis());
+        assertEquals(ArmSelection.FRONT_ARM, strike.getArm());
+        assertEquals(INCH_TYPE, strike.getDamageTypeId());
+        assertEquals(INCH_MULTIPLIER, strike.getMultiplier().getValue(), TOLERANCE);
+        assertEquals(INCH_REACH, strike.getDistance().getValue(), TOLERANCE);
+        assertEquals(LegKnockbackKind.NONE, strike.getKnockbackKind());
+        assertEquals(INCH_ORGAN_SHARE, strike.getPenetration().getOrganShare().getValue(), TOLERANCE);
+        assertEquals(INCH_ARMOR, strike.getPenetration().getArmorMultiplier().getValue(), TOLERANCE);
+        assertTrue(TechniqueLimbStrikes.direct(strike));
+        assertEquals(INCH_MILLIS, definition.getPhases().getWarmupMillis());
+    }
+
+    @Test
+    public void wristLockHoldsThenWrenchesTheArmedForearmTwice() throws IOException {
+        // 缠腕：0.90 s 擒到 2.50 s 放手；1.40、2.10 两下拧对方持械前臂，×0.6、×0.9，整条手臂麻 6 s，第二下卸兵器。
+        TechniqueDefinition definition = VillagerFistContent.registry().findLatest(WRIST_LOCK).orElseThrow();
+        TechniqueEffect hold = only(definition, TechniqueEffect::hasGrapple);
+        assertEquals(LOCK_GRAPPLE_MILLIS, hold.getAtMillis());
+        assertEquals(LOCK_HOLD_MILLIS, hold.getGrapple().getDurationMillis());
+        assertFalse("缠腕摔不动就只拧，不带一靠", hold.getGrapple().hasLean());
+        List<TechniqueEffect> twists = definition.getEffectsList().stream()
+                .filter(TechniqueEffect::hasLimbStrike).toList();
+        assertEquals(LOCK_TWIST_MILLIS, twists.stream().map(TechniqueEffect::getAtMillis).toList());
+        assertEquals(LOCK_MULTIPLIERS, twists.stream()
+                .map(twist -> twist.getLimbStrike().getMultiplier().getValue()).toList());
+        for (TechniqueEffect twist : twists) {
+            LimbStrike strike = twist.getLimbStrike();
+            assertEquals(ArmSelection.BOTH_ARMS, strike.getArm());
+            assertEquals(LOCK_TYPE, strike.getDamageTypeId());
+            assertTrue(strike.getArmedForearm());
+            Numb numb = strike.getAttachments(0).getNumb();
+            assertEquals(NUMB_MULTIPLIER, numb.getMultiplier().getValue(), TOLERANCE);
+            assertEquals(NUMB_MILLIS, numb.getDurationMillis());
+            assertTrue(numb.getWholeArm());
+        }
+        assertFalse(twists.get(0).getLimbStrike().getDisarm());
+        assertTrue(twists.get(1).getLimbStrike().getDisarm());
     }
 
     @Test

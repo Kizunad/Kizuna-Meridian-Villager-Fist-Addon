@@ -1,0 +1,56 @@
+plugins { id 'net.fabricmc.fabric-loom' }
+
+description = '袖手拳的真实客户端连拍，合成录像给人看。一次只录一段，-PclienttestClip 选：sortie（村民主动出击）、inner（中卷寸劲和缠腕）。'
+
+repositories {
+    // Threatening 以源码组合进来，完整装配按坐标装入它的 fabric 模块，连带它 include 的寻路核心；
+    // 寻路核心不参与源码组合，按文件取；位置由工作区给。
+    flatDir { dirs kizunaWorkspace.artifact('pathfinding', 'core', false).parentFile }
+}
+
+dependencies {
+    // 26.x 不混淆：直接用官方名编译，模组依赖也不经重映射。
+    minecraft libs.minecraft
+    implementation libs.fabric.loader
+    implementation libs.fabric.api
+    // 正式数据包按安装 JAR 装入，和 GameTest 一样用发行包自己的资源。
+    localRuntime files(rootProject.project(':fabric').tasks.named('jar'))
+    // 给村民保底开一条手经走 Threatening 的公开职守入口；运行时由完整装配装入一次。
+    compileOnly('dev.kizuna.meridian.humanoid:fabric') { transitive = false }
+    // 中卷连拍直接向功法服务起式。
+    compileOnly('dev.kizuna.meridian.technique:fabric') { transitive = false }
+    compileOnly 'dev.kizuna.meridian.technique:server'
+    compileOnly 'dev.kizuna.meridian.technique:shared'
+    compileOnly libs.protobuf.java
+}
+
+apply from: new File(kizunaWorkspace.directory('framework'), 'scripts/full-assembly.gradle')
+
+loom {
+    mods {
+        meridian_villager_clienttest { sourceSet sourceSets.main }
+    }
+    runs {
+        clientGametest {
+            client()
+            name '袖手拳客户端连拍'
+            runDir providers.gradleProperty('clienttestRunDir').getOrElse('build/clienttest')
+            vmArg '-Dfabric.client.gametest'
+            vmArg '-Dfabric.client.gametest.modid=meridian_villager_clienttest'
+            // 各连拍类自己看这个属性决定跑不跑，缺省录村民主动出击。
+            vmArg "-Dmeridian.villager.clip=${providers.gradleProperty('clienttestClip').getOrElse('sortie')}"
+            programArgs '--width', '1280', '--height', '720'
+            programArgs '--username', 'Player991'
+        }
+    }
+}
+
+tasks.named('runClientGametest') {
+    doFirst {
+        // 跳过首启无障碍引导，界面用中文。
+        def runDirectory = file(providers.gradleProperty('clienttestRunDir').getOrElse('build/clienttest'))
+        runDirectory.mkdirs()
+        // 视野 40 度（选项里存的是 (度数 − 70) / 40）：镜头离得远，人物在画面里才够大。
+        new File(runDirectory, 'options.txt').text = 'onboardAccessibility:false\nlang:zh_cn\nfov:-0.75\n'
+    }
+}
