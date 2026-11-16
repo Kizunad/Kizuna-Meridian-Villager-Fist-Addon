@@ -9,7 +9,7 @@ books {
   display_name: "袖手拳"
   arm_rules {
     ignore_held_items: true
-    require_grounded: true
+    require_grounded: false
     base_damage { value: 1.5 unit: DAMAGE_POINT }
   }
 }

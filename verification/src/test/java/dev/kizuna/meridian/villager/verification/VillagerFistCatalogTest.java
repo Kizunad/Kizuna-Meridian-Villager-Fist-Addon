@@ -102,11 +102,11 @@ public final class VillagerFistCatalogTest {
     }
 
     @Test
-    public void bookFightsBareHandedOnTheGround() throws IOException {
-        // 书级拳掌规则：不看持物、要着地。
+    public void bookFightsBareHandedAnywhere() throws IOException {
+        // 书级拳掌规则：不看持物；不要求着地（用户 11-15：站在地上才能出拳没必要），跳起、下落中都能出拳。
         var book = VillagerFistContent.registry().books().getFirst();
         assertTrue(book.getArmRules().getIgnoreHeldItems());
-        assertTrue(book.getArmRules().getRequireGrounded());
+        assertFalse(book.getArmRules().getRequireGrounded());
     }
 
     @Test
