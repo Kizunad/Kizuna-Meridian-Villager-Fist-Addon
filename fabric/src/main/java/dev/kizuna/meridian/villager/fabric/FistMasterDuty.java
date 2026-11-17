@@ -87,8 +87,9 @@ public final class FistMasterDuty {
     private static void dismiss(Villager villager) {
         // 没被本仓上任过的不动：别的附属、命令给村民挂的「不退」「守村」照旧留着。
         if (villager.removeTag(APPOINTED_TAG)) {
-            HumanoidDuties.standGround(villager, false);
-            HumanoidDuties.guardVillage(villager, false);
+            HumanoidDuties.standGround(villager, false /* enabled */);
+            HumanoidDuties.guardVillage(villager, false /* enabled */);
+            HumanoidDuties.dismissMeleeGuard(villager);
         }
     }
 
@@ -103,8 +104,9 @@ public final class FistMasterDuty {
                 || !HumanoidDuties.trainArms(villager, WANDERING_QI_ARM_GROWTH, TRUE_QI_ARM_GROWTH)) {
             return false;
         }
-        HumanoidDuties.standGround(villager, true);
-        HumanoidDuties.guardVillage(villager, true);
+        HumanoidDuties.standGround(villager, true /* enabled */);
+        HumanoidDuties.guardVillage(villager, true /* enabled */);
+        HumanoidDuties.appointMeleeGuard(villager);
         villager.addTag(APPOINTED_TAG);
         return true;
     }

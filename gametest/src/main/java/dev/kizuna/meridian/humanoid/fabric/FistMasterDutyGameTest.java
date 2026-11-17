@@ -105,6 +105,7 @@ public final class FistMasterDutyGameTest {
         context.runAfterDelay(SETTLE_TICKS, () -> {
             context.assertTrue(HumanoidDuties.standsGround(master) && HumanoidDuties.guardsVillage(master),
                     "拳师上任后没有挂上不退和守村");
+            context.assertTrue(HumanoidMeleeGuard.enabled(master), "拳师没有登记近身守卫策略");
             context.assertTrue(handOpened(master) && bindable(master, CRUSHING_FIST), "拳师上任后还是用不了拳");
             context.assertTrue(handsOpened(master) == APPOINTED_HANDS && bindable(master, INCH_POWER),
                     "拳师上任后应保底开着一条手经、绑得上中卷的寸劲，实际开了 " + handsOpened(master));
@@ -119,6 +120,8 @@ public final class FistMasterDutyGameTest {
             opponent.discard();
             context.assertTrue(!HumanoidDuties.standsGround(mortal) && !HumanoidDuties.guardsVillage(mortal),
                     "凡人拳师不该任职");
+            context.assertTrue(!HumanoidMeleeGuard.enabled(mortal) && !HumanoidMeleeGuard.enabled(outsider),
+                    "凡人或未任职村民获得了近身守卫策略");
             context.assertTrue(body(mortal).getTissueStatesList().equals(mortalBefore) && !handOpened(mortal),
                     "凡人拳师的身体被动过");
             context.assertTrue(HumanoidDuties.standsGround(outsider) && HumanoidDuties.guardsVillage(outsider),
@@ -127,6 +130,8 @@ public final class FistMasterDutyGameTest {
             context.runAfterDelay(SETTLE_TICKS, () -> {
                 context.assertTrue(!HumanoidDuties.standsGround(master) && !HumanoidDuties.guardsVillage(master),
                         "不再是拳师，不退和守村没有撤掉");
+                context.assertTrue(!master.entityTags().contains(HumanoidDuties.MELEE_GUARD_TAG),
+                        "卸任后仍有近身守卫策略");
                 context.assertTrue(handsOpened(master) == APPOINTED_HANDS, "不再是拳师，开的手经不该收回");
                 verifyArms(context, master, before, WANDERING_QI_GROWTH);
                 master.discard();
@@ -170,7 +175,8 @@ public final class FistMasterDutyGameTest {
                     firstCast.put(index, throwState(masters.get(index), shielded.get(index)));
                 }
                 String where = "第 " + index + " 个拳师";
-                context.assertTrue(!techniques.isEmpty(), where + "还没出手" + trail(masters.get(index)));
+                context.assertTrue(!techniques.isEmpty(), where + "还没出手" + trail(masters.get(index))
+                        + "；起手前 " + firstCast.get(index));
                 context.assertTrue(shielded.get(index).isBlocking(), where + "对面的盾放下了，这条用例不成立");
                 context.assertTrue(techniques.getFirst().equals(THROW), where + "对着盾的第一式不是背摔：" + techniques
                         + "；出手前一刻背摔的状况 " + firstCast.get(index) + "；开打那一刻"
@@ -234,6 +240,9 @@ public final class FistMasterDutyGameTest {
         long cooldown = progress.getCooldownsOrDefault(THROW, 0) - body.settledAt().elapsedMillis();
         return "[" + bound + " 付得起=" + payable + " 是候选=" + candidates(villager, opponent).contains(THROW)
                 + " 冷却还剩毫秒=" + Math.max(0, cooldown) + " 距离=" + String.format("%.2f", villager.distanceTo(opponent))
+                + " 自身位置=" + villager.position() + " 对手位置=" + opponent.position()
+                + " 自身速度=" + villager.getDeltaMovement() + " 对手速度=" + opponent.getDeltaMovement()
+                + " 自身着地=" + villager.onGround() + " 对手着地=" + opponent.onGround()
                 + " 对手举盾=" + opponent.isBlocking() + " 被围=" + HumanoidThreats.surrounded(villager)
                 + " 对手=" + HumanoidBrain.decisions(villager.getUUID()).stream().reduce((first, last) -> last)
                         .flatMap(HumanoidMind.Logged::opponent).map(entity -> entity == opponent).orElse(false) + "]";
