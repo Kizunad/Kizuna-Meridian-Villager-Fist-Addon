@@ -114,8 +114,6 @@ public final class VillagerInnerClientTest implements FabricClientGameTest {
         command(world, "weather clear");
         command(world, "gamemode spectator @a");
         context.runOnClient(client -> {
-            // 新玩家进世界会弹出身抽选界面，整屏挡住画面；合上它等于点「先不选」。
-            client.gui.setScreen(null);
             if (!client.gui.hud.isHidden()) {
                 client.gui.hud.toggle();
             }
