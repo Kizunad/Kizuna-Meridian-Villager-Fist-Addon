@@ -37,6 +37,9 @@ public final class VillagerFistDrillGameTest {
     /** 方块桩瞄方块中心，实体桩瞄齐胸高。 */
     private static final double BLOCK_AIM_HEIGHT = 0.5;
     private static final double ENTITY_AIM_HEIGHT = 1.0;
+    private static final Vec3 POST_MIDDLE = Vec3.atBottomCenterOf(POST).add(0, BLOCK_AIM_HEIGHT, 0);
+    private static final BlockPos BESIDE = new BlockPos(CENTER + 1, HEIGHT, CENTER);
+    private static final double ASIDE = 0.5;
     /** 击打声在桩附近这么远以内才算这根桩的。 */
     private static final double SOUND_RADIUS = 2;
     /** 第一个木桩事件在起式 1 秒（20 tick）只锁桩，之后每 10 tick 响一下；45 tick 时已响两下。 */
@@ -112,6 +115,59 @@ public final class VillagerFistDrillGameTest {
     }
 
     @GameTest(maxTicks = TIMEOUT_TICKS)
+    public void drillStartsLookingLevelAtTheWoodenDummy(GameTestHelper context) {
+        // 站在木人桩跟前平视：视线从桩顶上面过去，照样能起式，不用低头。
+        Block woodenDummy = BuiltInRegistries.BLOCK.getValue(WOODEN_DUMMY);
+        drillsFacing(context, helper -> helper.setBlock(POST, woodenDummy), POST_MIDDLE, WOOD_HIT, "平视木人桩",
+                fixture -> { });
+    }
+
+    @GameTest(maxTicks = TIMEOUT_TICKS)
+    public void drillStartsLookingLevelAtAPostTwoBlocksAhead(GameTestHelper context) {
+        // 隔一格空地的原木还在够得着的两格以内。
+        drillsFacing(context, helper -> helper.setBlock(POST.south(), Blocks.OAK_LOG),
+                POST_MIDDLE.add(0, 0, 1), WOOD_HIT, "平视两格外的原木", fixture -> { });
+    }
+
+    @GameTest(maxTicks = TIMEOUT_TICKS)
+    public void drillStartsLookingLevelAtAnArmorStandSlightlyAside(GameTestHelper context) {
+        // 盔甲架偏在右前方半格（偏离正前方约 27°），准星没对着它，也算在面前。
+        Vec3 stand = Vec3.atBottomCenterOf(POST).add(ASIDE, 0, 0);
+        drillsFacing(context, helper -> helper.spawn(EntityTypes.ARMOR_STAND, stand), stand.add(0, ENTITY_AIM_HEIGHT, 0),
+                WOOD_HIT, "平视偏在一旁的盔甲架", fixture -> { });
+    }
+
+    @GameTest(maxTicks = TIMEOUT_TICKS)
+    public void drillLookingLevelIgnoresAPostBesideThePlayer(GameTestHelper context) {
+        // 桩在正左边（偏离正前方 90°）：不算对着，照旧拒绝。
+        var fixture = new VillagerFistTestPlayer(context);
+        context.setBlock(BESIDE, BuiltInRegistries.BLOCK.getValue(WOODEN_DUMMY));
+        fixture.start(DRILL, "桩在身旁：打木桩");
+        context.runAfterDelay(REJECTED_TICKS, () -> {
+            try (fixture) {
+                assertRejected(context, fixture.ended(DRILL), "桩在身旁时");
+                context.succeed();
+            }
+        });
+    }
+
+    @GameTest(maxTicks = TIMEOUT_TICKS)
+    public void drillLookingLevelDoesNotReachThroughAWall(GameTestHelper context) {
+        // 两格外的原木本来够得着（上一条），中间砌一堵两格高的墙就不算。
+        var fixture = new VillagerFistTestPlayer(context);
+        context.setBlock(POST.south(), Blocks.OAK_LOG);
+        context.setBlock(POST, Blocks.STONE);
+        context.setBlock(POST.above(), Blocks.STONE);
+        fixture.start(DRILL, "隔墙：打木桩");
+        context.runAfterDelay(REJECTED_TICKS, () -> {
+            try (fixture) {
+                assertRejected(context, fixture.ended(DRILL), "隔着墙时");
+                context.succeed();
+            }
+        });
+    }
+
+    @GameTest(maxTicks = TIMEOUT_TICKS)
     public void drillStopsWhenThePostIsMined(GameTestHelper context) {
         // 打到一半挖掉木人桩：下一个木桩事件被拒绝，施放中断。
         var fixture = new VillagerFistTestPlayer(context);
@@ -155,13 +211,20 @@ public final class VillagerFistDrillGameTest {
     private static void drillsAt(GameTestHelper context, Consumer<GameTestHelper> placePost, double aimHeight,
                                  Identifier hitSound, String label) {
         // 桩脚下垫一块石头（实体桩有重力，会掉出准星），摆好桩、对准、起式；45 tick 时施放还在，并在桩附近听到至少两下这根桩的击打声。
+        Vec3 aim = Vec3.atBottomCenterOf(POST).add(0, aimHeight, 0);
+        drillsFacing(context, placePost, aim, hitSound, label, fixture -> fixture.lookAt(aim));
+    }
+
+    private static void drillsFacing(GameTestHelper context, Consumer<GameTestHelper> placePost, Vec3 soundAt,
+                                     Identifier hitSound, String label, Consumer<VillagerFistTestPlayer> look) {
+        // look 摆视线（什么都不做就是平视正前方）；击打声要响在 soundAt 附近。
         var fixture = new VillagerFistTestPlayer(context);
         context.setBlock(POST.below(), Blocks.STONE);
+        context.setBlock(POST.south().below(), Blocks.STONE);
         placePost.accept(context);
-        Vec3 aim = Vec3.atBottomCenterOf(POST).add(0, aimHeight, 0);
-        fixture.lookAt(aim);
+        look.accept(fixture);
         fixture.start(DRILL, label + "：打木桩");
-        Vec3 post = context.absoluteVec(aim);
+        Vec3 post = context.absoluteVec(soundAt);
         context.runAfterDelay(STRIKING_TICKS, () -> {
             try (fixture) {
                 Optional<TechniqueCastEnded> ended = fixture.ended(DRILL);
