@@ -28,14 +28,17 @@ public final class VillagerFistResourcesTest {
     private static final String ASSETS = "assets/" + VillagerFistContent.NAMESPACE + "/";
     private static final String PREFIX = VillagerFistContent.NAMESPACE + ":";
     private static final List<String> LANGUAGES = List.of("zh_cn", "en_us");
-    /** 拳掌伤害进 Damage 的钝击、近战、打躯干三条标签；双手的另进 two_handed。 */
-    private static final List<String> STRIKE_TAGS = List.of("kind/blunt", "melee", "aim/torso");
+    /** 拳掌伤害都进钝击、近战标签，落点和出手侧逐项验证。 */
+    private static final List<String> STRIKE_TAGS = List.of("kind/blunt", "melee");
     private static final String TWO_HANDED_TAG = "two_handed";
     private static final String OFF_HAND_TAG = "off_hand";
     private static final String TORSO_TAG = "aim/torso";
     private static final String INCH_TYPE = PREFIX + "inch_power";
     private static final String LOCK_TYPE = PREFIX + "joint_lock";
     private static final String BOTH_ARMS_TYPE = PREFIX + "fist_both_torso";
+    private static final String REAR_ARM_TYPE = PREFIX + "fist_rear_torso";
+    private static final String UPPERCUT_TYPE = PREFIX + "fist_uppercut";
+    private static final String HEAD_NECK_TAG = "aim/head_neck";
     /** 背摔落地和一靠：双手、打躯干。 */
     private static final String THROW_TYPE = PREFIX + "throw";
     private static final Set<String> UNTHROWABLE = Set.of("minecraft:iron_golem", "minecraft:ravager",
@@ -62,19 +65,24 @@ public final class VillagerFistResourcesTest {
 
     @Test
     public void catalogDamageTypesAreRegisteredAndTagged() throws IOException {
-        // 目录引用的每个伤害类型在本仓注册，进钝击、近战标签；打躯干的进躯干标签，缠腕点名打前臂所以不进。
-        // 双手出拳、背摔、缠腕进 two_handed；寸劲用前手，进 off_hand。
+        // 撩天打头颈，其余落点保持原有分组；旧双手躯干类型继续注册并保留标签。
+        // 缠腕点名打前臂，所以不进任何 aim 标签；寸劲用前手，进 off_hand。
         Set<String> used = damageTypes(VillagerFistContent.catalog());
-        assertEquals(Set.of(PREFIX + "fist_rear_torso", BOTH_ARMS_TYPE, THROW_TYPE, INCH_TYPE, LOCK_TYPE), used);
-        for (String type : used) {
+        assertEquals(Set.of(REAR_ARM_TYPE, UPPERCUT_TYPE, THROW_TYPE, INCH_TYPE, LOCK_TYPE), used);
+        Set<String> registered = new TreeSet<>(used);
+        registered.add(BOTH_ARMS_TYPE);
+        for (String type : registered) {
             assertTrue(type, Files.isRegularFile(resource(DATA + "damage_type/" + local(type) + ".json")));
             for (String tag : STRIKE_TAGS) {
-                boolean expected = !tag.equals(TORSO_TAG) || !type.equals(LOCK_TYPE);
-                assertEquals(type + " 的 " + tag, expected, damageTag(tag).contains(type));
+                assertTrue(type + " 的 " + tag, damageTag(tag).contains(type));
             }
         }
-        assertEquals(Set.of(BOTH_ARMS_TYPE, THROW_TYPE, LOCK_TYPE), damageTag(TWO_HANDED_TAG));
+        assertEquals(Set.of(REAR_ARM_TYPE, BOTH_ARMS_TYPE, THROW_TYPE, INCH_TYPE), damageTag(TORSO_TAG));
+        assertEquals(Set.of(UPPERCUT_TYPE), damageTag(HEAD_NECK_TAG));
+        assertEquals(Set.of(BOTH_ARMS_TYPE, UPPERCUT_TYPE, THROW_TYPE, LOCK_TYPE), damageTag(TWO_HANDED_TAG));
         assertEquals(Set.of(INCH_TYPE), damageTag(OFF_HAND_TAG));
+        assertEquals(json(DATA + "damage_type/" + local(BOTH_ARMS_TYPE) + ".json"),
+                json(DATA + "damage_type/" + local(UPPERCUT_TYPE) + ".json"));
     }
 
     @Test
@@ -84,6 +92,14 @@ public final class VillagerFistResourcesTest {
         assertEquals(Set.of(THROW_TYPE, INCH_TYPE, LOCK_TYPE), appended("no_knockback"));
         assertEquals(Set.of(LOCK_TYPE), appended("bypasses_cooldown"));
         assertEquals(Set.of(LOCK_TYPE), appended("bypasses_shield"));
+        try (Stream<Path> files = Files.walk(resource("data/minecraft/tags/damage_type"))) {
+            for (Path file : files.filter(path -> path.toString().endsWith(".json")).toList()) {
+                JsonObject tag = JsonParser.parseString(Files.readString(file, StandardCharsets.UTF_8))
+                        .getAsJsonObject();
+                Set<String> members = values(tag);
+                assertEquals(file.toString(), members.contains(BOTH_ARMS_TYPE), members.contains(UPPERCUT_TYPE));
+            }
+        }
     }
 
     private static Set<String> appended(String vanillaTag) throws IOException {

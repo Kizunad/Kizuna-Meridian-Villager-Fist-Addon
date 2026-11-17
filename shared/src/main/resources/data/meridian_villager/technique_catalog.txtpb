@@ -11,7 +11,7 @@ books {
   arm_rules {
     ignore_held_items: true
     require_grounded: false
-    base_damage { value: 1.5 unit: DAMAGE_POINT }
+    base_damage { value: 3 unit: DAMAGE_POINT }
   }
 }
 
@@ -163,7 +163,7 @@ definitions {
       maximum_targets: 1
       cast_target_limit: 1
       arm: BOTH_ARMS
-      damage_type_id: "meridian_villager:fist_both_torso"
+      damage_type_id: "meridian_villager:fist_uppercut"
       knockback_kind: LIFT
       knockback { value: 0.3 unit: RATIO }
       lift_speed { value: 8 unit: METERS_PER_SECOND }

@@ -61,8 +61,11 @@ public final class VillagerFistThrowGameTest {
     private static final double WALLED_LANDING_DISTANCE = 1;
     private static final double GOLEM_DISTANCE = 1.8;
     private static final double POSITION_TOLERANCE = 0.2;
-    /** 书级空手 1.5 × 一靠 0.4 × 双手 1.2。 */
-    private static final double LEAN_DOSE = 1.5 * 0.4 * 1.2;
+    private static final double BASE_DAMAGE = 3;
+    private static final double LEAN_MULTIPLIER = 0.4;
+    private static final double BOTH_ARMS_MULTIPLIER = 1.2;
+    /** 书级空手伤害乘一靠倍率和双手系数。 */
+    private static final double LEAN_DOSE = BASE_DAMAGE * LEAN_MULTIPLIER * BOTH_ARMS_MULTIPLIER;
     private static final double DOSE_TOLERANCE = 0.0001;
     private static final double HALF = 0.5;
 
@@ -149,7 +152,7 @@ public final class VillagerFistThrowGameTest {
 
     @GameTest(maxTicks = TIMEOUT_TICKS)
     public void ironGolemIsTooHeavyAndTakesALeanInstead(GameTestHelper context) {
-        // 铁傀儡在不可摔名单里：不擒不摔，1.50 挨一靠，剂量 1.5 × 0.4 × 1.2；施放者动作栏看到「摔不动」。
+        // 铁傀儡在不可摔名单里：不擒不摔，1.50 挨一靠；施放者动作栏看到「摔不动」。
         floor(context);
         var fixture = new VillagerFistTestPlayer(context);
         Golem golem = new Golem(context.getLevel());

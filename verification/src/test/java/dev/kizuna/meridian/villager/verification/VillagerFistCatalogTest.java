@@ -92,6 +92,7 @@ public final class VillagerFistCatalogTest {
     private static final double DRILL_WATTS = 45;
     private static final double DRILL_SEGMENT_SECONDS = 6;
     private static final double TOLERANCE = 1e-9;
+    private static final double BASE_DAMAGE = 3;
 
     /** 一式打人的表：起手、收势、冷却、出拳时刻、出拳手、伤害类型、倍率、击退方式。 */
     private record Strike(long warmupMillis, long recoveryMillis, long cooldownMillis, long strikeMillis,
@@ -102,7 +103,7 @@ public final class VillagerFistCatalogTest {
             CRUSHING_FIST, new Strike(1_000, 2_000, 1_000, 1_000, ArmSelection.REAR_ARM,
                     "meridian_villager:fist_rear_torso", 1.4, LegKnockbackKind.PUSH),
             GOLEM_LIFT, new Strike(1_900, 3_100, 4_000, 1_900, ArmSelection.BOTH_ARMS,
-                    "meridian_villager:fist_both_torso", 1.5, LegKnockbackKind.LIFT));
+                    "meridian_villager:fist_uppercut", 1.5, LegKnockbackKind.LIFT));
 
     @Test
     public void catalogRegistersOneBookWithTheOuterVolume() throws IOException {
@@ -187,8 +188,10 @@ public final class VillagerFistCatalogTest {
     public void bookFightsBareHandedAnywhere() throws IOException {
         // 书级拳掌规则：不看持物；不要求着地（用户 11-15：站在地上才能出拳没必要），跳起、下落中都能出拳。
         var book = VillagerFistContent.registry().books().getFirst();
-        assertTrue(book.getArmRules().getIgnoreHeldItems());
-        assertFalse(book.getArmRules().getRequireGrounded());
+        var armRules = book.getArmRules();
+        assertTrue(armRules.getIgnoreHeldItems());
+        assertFalse(armRules.getRequireGrounded());
+        assertEquals(BASE_DAMAGE, armRules.getBaseDamage().getValue(), TOLERANCE);
     }
 
     @Test

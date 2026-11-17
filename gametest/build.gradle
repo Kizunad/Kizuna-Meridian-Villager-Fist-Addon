@@ -26,6 +26,8 @@ dependencies {
     // 拳师职守的用例放在 Threatening 的 Fabric 包里，读它的包内入口看身体和当前施放；运行时由完整装配提供。
     compileOnly('dev.kizuna.meridian.humanoid:fabric') { transitive = false }
     compileOnly('dev.kizuna.meridian.humanoid:server') { transitive = false }
+    // 落点断言读取 Damage 的提交后通知；运行时由完整装配提供。
+    compileOnly('dev.kizuna.meridian.vanilla:fabric') { transitive = false }
     // 拳师用例读 PA Mobs 的服务端播放快照；PA Mobs 本身由完整装配在运行期装入。
     compileOnly('dev.kizuna:kizuna-players-animation-mobs-addon') { transitive = false }
     // 正式数据包按安装 JAR 装入，验证发行包自己的清单和资源。Gradle 9 的依赖块里 project() 返回
