@@ -34,7 +34,7 @@ public final class FistGuardSpeedGameTest {
     private static final int LANE_X = 3;
     private static final HumanoidMotion.Speeds ORDINARY =
             new HumanoidMotion.Speeds(ORDINARY_APPROACH, ORDINARY_FLEE);
-    private static final ResourceKey<VillagerProfession> FIST_MASTER = ResourceKey.create(
+    static final ResourceKey<VillagerProfession> FIST_MASTER = ResourceKey.create(
             Registries.VILLAGER_PROFESSION, Identifier.parse("meridian_villager:fist_master"));
     private static final Field NAV_SPEED = navigationSpeedField();
 
@@ -187,6 +187,7 @@ public final class FistGuardSpeedGameTest {
                 arena.fighter.addTag(HumanoidMeleeGuard.WITHDRAWN_TAG);
                 assertSpeed(arena, selected(arena, mind), ORDINARY_APPROACH, "重伤撤离被接敌提速覆盖");
                 arena.fighter.removeTag(HumanoidMeleeGuard.WITHDRAWN_TAG);
+                arena.target.setItemSlot(EquipmentSlot.MAINHAND, ItemStack.EMPTY);
                 arena.start(FistXbowTestArena.LONG_STRIKE);
                 assertSpeed(arena, selected(arena, mind), ORDINARY_APPROACH, "施放中仍套用接敌提速");
                 var speeds = HumanoidMeleeGuard.speeds(arena.fighter, mind, ORDINARY);
@@ -226,7 +227,7 @@ public final class FistGuardSpeedGameTest {
         }
     }
 
-    private static double navigationSpeed(PathNavigation navigation) {
+    static double navigationSpeed(PathNavigation navigation) {
         try {
             return NAV_SPEED.getDouble(navigation);
         } catch (IllegalAccessException failure) {

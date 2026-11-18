@@ -18,6 +18,7 @@ import net.minecraft.world.entity.EntitySpawnReason;
 import net.minecraft.world.entity.EntityTypes;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.Mob;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.monster.illager.Pillager;
 import net.minecraft.world.entity.npc.villager.Villager;
 import net.minecraft.world.entity.npc.villager.VillagerProfession;
@@ -116,6 +117,10 @@ final class FistXbowTestArena implements AutoCloseable {
     }
 
     void start(String technique) {
+        start(technique, target);
+    }
+
+    void start(String technique, LivingEntity opponent) {
         var body = HumanoidTechniqueHost.prepare(fighter).body();
         var reference = body.techniqueProgress().getKnownList().stream()
                 .map(known -> known.getTechnique())
@@ -125,7 +130,7 @@ final class FistXbowTestArena implements AutoCloseable {
                 .setBodyId(body.snapshot().getId())
                 .setCastId(UUID.randomUUID().toString())
                 .setTechnique(reference)
-                .setTargetId(target.getStringUUID())
+                .setTargetId(opponent.getStringUUID())
                 .build();
         var outcome = TechniqueFabric.service().cast(fighter.getUUID(), request);
         context.assertTrue(outcome.getFailure() == TechniqueFailure.TECHNIQUE_FAILURE_UNSPECIFIED,

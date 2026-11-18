@@ -38,6 +38,9 @@ public final class FistMasterDuty {
     }
 
     static void register() {
+        String prefix = VillagerFistFabric.MOD_ID + ":";
+        HumanoidDuties.registerWarmupPursuit(APPOINTED_TAG, Set.of(prefix + "crushing_fist", prefix + "golem_lift",
+                prefix + "shoulder_throw", prefix + "inch_power", prefix + "wrist_lock"));
         // 进世界的村民也对一遍：这样读档回来的、命令放出来的拳师都认。
         ServerEntityEvents.ENTITY_LOAD.register((entity, level) -> {
             if (entity instanceof Villager villager) {

@@ -29,6 +29,19 @@ public final class VillagerFistStrikeGameTest {
     private static final double NO_RESISTANCE = 0;
     private static final double HALF_RESISTANCE = 0.5;
     private static final double EPSILON = 0.00001;
+    private static final double FIST_MOVEMENT_MULTIPLIER = 0.4;
+
+    @GameTest(maxTicks = TIMEOUT_TICKS)
+    public void warmupPursuitKeepsPlayerMovementLimit(GameTestHelper context) {
+        try (var fixture = new VillagerFistTestPlayer(context)) {
+            var player = fixture.player;
+            double before = player.getAttributeValue(Attributes.MOVEMENT_SPEED);
+            fixture.start(CRUSHING, "崩拳");
+            double speed = player.getAttributeValue(Attributes.MOVEMENT_SPEED);
+            context.assertTrue(Math.abs(speed - before * FIST_MOVEMENT_MULTIPLIER) < EPSILON, "玩家起手限速改变");
+            context.succeed();
+        }
+    }
 
     @GameTest(maxTicks = TIMEOUT_TICKS)
     public void crushingFistLandsOneSecondAfterTheCast(GameTestHelper context) {

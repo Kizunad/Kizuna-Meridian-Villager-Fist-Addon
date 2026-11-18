@@ -18,6 +18,7 @@
       "dev.kizuna.meridian.humanoid.fabric.FistMasterDutyGameTest",
       "dev.kizuna.meridian.humanoid.fabric.FistXbowGuardGameTest",
       "dev.kizuna.meridian.humanoid.fabric.FistGuardSpeedGameTest",
+      "dev.kizuna.meridian.humanoid.fabric.FistWarmupPursuitGameTest",
       "dev.kizuna.meridian.humanoid.fabric.VillagerSortieGameTest"
     ]
   },

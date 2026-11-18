@@ -69,7 +69,7 @@ public final class FistXbowGuardGameTest {
         });
     }
 
-    private static void awaitChase(FistXbowTestArena arena, int remaining, Runnable action) {
+    static void awaitChase(FistXbowTestArena arena, int remaining, Runnable action) {
         var context = arena.context;
         context.runAfterDelay(1, () -> {
             boolean following = HumanoidBrain.directive(arena.fighter.getUUID())

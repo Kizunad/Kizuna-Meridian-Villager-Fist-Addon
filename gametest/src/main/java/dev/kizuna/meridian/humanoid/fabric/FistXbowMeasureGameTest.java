@@ -185,6 +185,26 @@ public final class FistXbowMeasureGameTest {
         LOGGER.info("XBOW_MEASURE {}", JSON.toJson(row));
     }
 
+    static JsonObject decisionRow(Mob actor) {
+        Scene scene = SCENES.get(actor.getUUID());
+        if (scene == null || !scene.started || scene.fighter != actor) {
+            return null;
+        }
+        JsonObject row = scene.row("decision");
+        scene.facts(row);
+        return row;
+    }
+
+    static void finishDecision(Mob actor, JsonObject row) {
+        var history = HumanoidBrain.decisions(actor.getUUID());
+        if (!history.isEmpty() && history.getLast().tick() == actor.level().getGameTime()) {
+            var decision = history.getLast().decision();
+            row.addProperty("action", decision.action().name());
+            row.addProperty("reason", decision.reason());
+        }
+        emit(row);
+    }
+
     private static void place(Mob mob, BlockPos position, String identity) {
         Vec3 feet = Vec3.atBottomCenterOf(position);
         mob.setUUID(UUID.nameUUIDFromBytes(identity.getBytes(StandardCharsets.UTF_8)));
