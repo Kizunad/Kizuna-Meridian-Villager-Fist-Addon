@@ -38,7 +38,8 @@
 
 ## 中卷 · 内家
 
-前置上卷。没有卷轴、不掉落：只在武馆传（武馆做出来以前用 `/meridian technique learn @s meridian_villager:inner`）。
+前置上卷。只在武馆传：有卷轴物品 `meridian_villager:inner_scroll`，但谁也不掉落、不交易，只能从创造栏拿
+（生存里武馆做出来以前用 `/meridian technique learn @s meridian_villager:inner`）。卷轴的说明里写着「这一卷不外传，要到武馆里跟拳师学」。
 十字手做好以后放进这一卷。
 
 | 式 | 起手 | 出手 | 收势 | 冷却 | 出拳手 | 伤害类型 | 倍率 | 击退 | 消耗 |

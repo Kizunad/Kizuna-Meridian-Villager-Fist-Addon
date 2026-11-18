@@ -5,15 +5,12 @@ import java.util.Optional;
 import net.fabricmc.fabric.api.gametest.v1.GameTest;
 import net.minecraft.core.GlobalPos;
 import net.minecraft.gametest.framework.GameTestHelper;
-import net.minecraft.world.InteractionHand;
-import net.minecraft.world.entity.EntitySpawnReason;
-import net.minecraft.world.entity.EntityTypes;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.ai.memory.MemoryModuleType;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.Vec3;
 
-/** 近身守卫的真实导航、首击、装填窗口与伤势撤离接线。 */
+/** 近身守卫的真实导航、首击与伤势撤离接线。 */
 public final class FistXbowGuardGameTest {
     private static final int TIMEOUT = 300;
     private static final int DECISION_TICKS = 10;
@@ -24,7 +21,7 @@ public final class FistXbowGuardGameTest {
     private static final int CHASE_TIMEOUT_TICKS = 100;
     private static final double NEAR_DISTANCE = 1.9;
     private static final double FOLLOW_DISTANCE = 2.8;
-    private static final double RELOAD_DISTANCE = 6;
+    private static final double APPROACH_DISTANCE = 6;
     private static final double ESCAPE_BLOCKS_PER_TICK = 0.3;
     private static final double GROUND_GRAVITY_BLOCKS_PER_TICK = -0.0784;
     private static final double MINIMUM_FOLLOW_BLOCKS = 0.1;
@@ -33,8 +30,6 @@ public final class FistXbowGuardGameTest {
     private static final double OVERALL_HP = 0.94;
     private static final double TOLERANCE = 0.001;
     private static final double OUTSIDE_POST = 17;
-    private static final double ARROW_HEIGHT = 1;
-    private static final double ARROW_SPEED = -0.1;
 
     @GameTest(maxTicks = TIMEOUT)
     public void xbowGuardRejectsEscapingTargetBeforeLongStrike(GameTestHelper context) {
@@ -110,18 +105,17 @@ public final class FistXbowGuardGameTest {
     }
 
     @GameTest(maxTicks = TIMEOUT)
-    public void xbowGuardReloadApproachClosesDistanceAndLands(GameTestHelper context) {
+    public void xbowGuardApproachClosesDistanceAndLandsWithoutReload(GameTestHelper context) {
         var arena = new FistXbowTestArena(context, 3);
         arena.whenReady(() -> {
             arena.wake();
             awaitChase(arena, CHASE_TIMEOUT_TICKS, () -> {
-                arena.targetAt(RELOAD_DISTANCE);
-                arena.target.startUsingItem(InteractionHand.MAIN_HAND);
+                arena.targetAt(APPROACH_DISTANCE);
                 double before = arena.fighter.distanceTo(arena.target);
-                context.assertTrue(HumanoidMeleeGuard.reloadWindow(arena.fighter, arena.target), reloadState(arena));
+                context.assertTrue(!arena.target.isUsingItem(), "弩手不应在装填");
                 context.runAfterDelay(OBSERVE_TICKS, () -> {
                     context.assertTrue(before - arena.fighter.distanceTo(arena.target) > MINIMUM_APPROACH_BLOCKS,
-                            "装填期间距离没有缩短" + FistMasterDutyGameTest.trail(arena.fighter));
+                            "接敌期间距离没有缩短" + FistMasterDutyGameTest.trail(arena.fighter));
                     awaitHit(arena, HIT_TIMEOUT);
                 });
             });
@@ -137,31 +131,6 @@ public final class FistXbowGuardGameTest {
                 arena.context.assertTrue(remaining > 0,
                         "接敌后没有真实命中" + FistMasterDutyGameTest.trail(arena.fighter));
                 awaitHit(arena, remaining - 1);
-            }
-        });
-    }
-
-    @GameTest(maxTicks = TIMEOUT)
-    public void xbowGuardFlyingArrowAndDisarmCloseReloadWindow(GameTestHelper context) {
-        var arena = new FistXbowTestArena(context, 4);
-        arena.whenReady(() -> {
-            try (arena) {
-                arena.fighter.setOnGround(true /* onGround */);
-                arena.target.startUsingItem(InteractionHand.MAIN_HAND);
-                context.assertTrue(HumanoidMeleeGuard.reloadWindow(arena.fighter, arena.target), reloadState(arena));
-                var level = context.getLevel();
-                var arrow = EntityTypes.ARROW.create(level, EntitySpawnReason.COMMAND);
-                Vec3 position = arena.fighter.position().add(0, ARROW_HEIGHT, NEAR_DISTANCE);
-                arrow.snapTo(position.x, position.y, position.z, 0, 0);
-                arrow.setOwner(arena.target);
-                arrow.setDeltaMovement(new Vec3(0, 0, ARROW_SPEED));
-                context.assertTrue(level.addFreshEntity(arrow), "箭未加入世界");
-                context.assertTrue(!HumanoidMeleeGuard.reloadWindow(arena.fighter, arena.target), "上一箭仍在飞却提速");
-                arrow.discard();
-                arena.target.stopUsingItem();
-                arena.target.setItemSlot(EquipmentSlot.MAINHAND, ItemStack.EMPTY);
-                context.assertTrue(!HumanoidMeleeGuard.reloadWindow(arena.fighter, arena.target), "缴械后仍认装填");
-                context.succeed();
             }
         });
     }
@@ -194,14 +163,6 @@ public final class FistXbowGuardGameTest {
         arena.context.assertTrue(HumanoidBrain.stance(arena.fighter.getUUID()).orElse(Stance.ENGAGE) == Stance.RETREAT,
                 "重伤拳师没有保持撤离" + FistMasterDutyGameTest.trail(arena.fighter));
         arena.context.assertTrue(HumanoidDuties.guardsVillage(arena.fighter), "撤离摘掉了守村标签");
-    }
-
-    private static String reloadState(FistXbowTestArena arena) {
-        return "装填窗口未识别：策略=" + HumanoidMeleeGuard.enabled(arena.fighter)
-                + " 着地=" + arena.fighter.onGround() + " 受击=" + arena.fighter.hurtTime
-                + " 施放=" + HumanoidTechniqueHost.hasActiveCast(arena.fighter)
-                + " 使用=" + arena.target.isUsingItem() + " 物品=" + arena.target.getUseItem()
-                + " 视线=" + arena.fighter.hasLineOfSight(arena.target);
     }
 
     @GameTest(maxTicks = TIMEOUT)

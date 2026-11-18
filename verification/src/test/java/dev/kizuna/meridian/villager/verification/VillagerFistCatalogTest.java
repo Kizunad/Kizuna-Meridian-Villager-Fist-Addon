@@ -123,14 +123,14 @@ public final class VillagerFistCatalogTest {
     }
 
     @Test
-    public void innerVolumeNeedsTheOuterAndHasNoScroll() throws IOException {
-        // 中卷：寸劲、缠腕，前置上卷，只在武馆传所以不生成卷轴、不掉落。
+    public void innerVolumeNeedsTheOuterAndItsScrollNeverDrops() throws IOException {
+        // 中卷：寸劲、缠腕，前置上卷。有卷轴物品（创造模式拿），但只在武馆传，所以谁也不掉落。
         TechniqueRegistry registry = VillagerFistContent.registry();
         var inner = registry.findVolume(INNER).orElseThrow();
         assertEquals(BOOK, inner.getBookId());
         assertEquals(INNER_TECHNIQUES, inner.getTechniquesList().stream().map(reference -> reference.getId()).toList());
         assertEquals(List.of(OUTER), inner.getPrerequisiteVolumeIdsList());
-        assertTrue("中卷不该有卷轴", inner.hasScrollItem() && !inner.getScrollItem());
+        assertFalse("中卷要有卷轴物品", inner.hasScrollItem() && !inner.getScrollItem());
         assertTrue(inner.getScrollDropsList().isEmpty());
         for (String id : INNER_TECHNIQUES) {
             TechniqueDefinition definition = registry.findLatest(id).orElseThrow();

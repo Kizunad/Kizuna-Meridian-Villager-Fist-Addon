@@ -3,13 +3,13 @@
 村里拳师传下来的拳法。本仓现在有：
 
 - 功法目录 `data/meridian_villager/technique_catalog.txtpb`：书《袖手拳》，上卷「外家」三式加打木桩、中卷「内家」两式（寸劲、缠腕），见 [Techniques](Techniques.md)。图标、卷轴贴图和木人桩模型的来历见 [Art](Art.md)。
-  下卷做好再加卷；中卷没有卷轴。
+  下卷做好再加卷；中卷有卷轴物品，但只为创造模式方便拿，生存里不掉落、不交易。
 - 木人桩方块 `meridian_villager:wooden_dummy`：一格占地，碰撞高 1.5 格，斧头挖得快，能烧。
   配方和拳师的交易表在数据包里。
 - 拳师职业 `meridian_villager:fist_master`：无业村民认领木人桩就成了拳师，工作声是木头受击。
   上班时站到桩前循环打桩动作（PA Mobs 的 `villager_dummy_drill`），每 0.5 秒桩上响一下；只是表演，不练功。
 - 打木桩处理器 `meridian_villager:dummy_drill`（功法库 `block_work` 的处理器）。
-- 创造栏「袖手拳」：木人桩和上卷卷轴。
+- 创造栏「袖手拳」：木人桩和上、中两卷的卷轴。
 - 调试指令 `/meridian debug villager_fist target`：看执行者现在对着哪根桩，认法和打木桩起式时一样。
 
 ## 依赖

@@ -28,11 +28,28 @@ dependencies {
     compileOnly('dev.kizuna.meridian.humanoid:server') { transitive = false }
     // 落点断言读取 Damage 的提交后通知；运行时由完整装配提供。
     compileOnly('dev.kizuna.meridian.vanilla:fabric') { transitive = false }
+    compileOnly('dev.kizuna.meridian.vanilla:server') { transitive = false }
     // 拳师用例读 PA Mobs 的服务端播放快照；PA Mobs 本身由完整装配在运行期装入。
     compileOnly('dev.kizuna:kizuna-players-animation-mobs-addon') { transitive = false }
     // 正式数据包按安装 JAR 装入，验证发行包自己的清单和资源。Gradle 9 的依赖块里 project() 返回
     // 依赖对象，所以从根工程取 fabric 工程的 jar 任务。测试不编译依赖本仓 fabric：方块、职业都按 ID 取。
     localRuntime files(rootProject.project(':fabric').tasks.named('jar'))
+}
+
+// 六十秒测量只在显式选择其过滤名时注册；正式回归不包含这些场地和效果探针。
+def fistXbowMeasurement = providers.gradleProperty('gametestFilter')
+        .map { it.contains('measure_fist_xbow') }.getOrElse(false)
+tasks.named('processResources') {
+    inputs.property('fistXbowMeasurement', fistXbowMeasurement)
+    doLast {
+        if (fistXbowMeasurement) {
+            def metadata = new File(destinationDir, 'fabric.mod.json')
+            def content = new groovy.json.JsonSlurper().parse(metadata)
+            content.entrypoints['fabric-gametest'].add('dev.kizuna.meridian.humanoid.fabric.FistXbowMeasureGameTest')
+            content.mixins = ['fist_xbow_measure.mixins.json']
+            metadata.text = groovy.json.JsonOutput.prettyPrint(groovy.json.JsonOutput.toJson(content)) + '\n'
+        }
+    }
 }
 
 loom {

@@ -59,15 +59,20 @@ final class FistXbowTestArena implements AutoCloseable {
     int hits;
 
     FistXbowTestArena(GameTestHelper context, int lane) {
+        this(context, lane, HumanoidTier.WANDERING_QI, PROFESSION);
+    }
+
+    FistXbowTestArena(GameTestHelper context, int lane, HumanoidTier tier,
+                     ResourceKey<VillagerProfession> profession) {
         this.context = context;
         base = arena(context, lane);
         var level = context.getLevel();
         fighter = EntityTypes.VILLAGER.create(level, EntitySpawnReason.COMMAND);
         place(fighter, Vec3.atBottomCenterOf(base.offset(FIGHTER_X, 0, FIGHTER_Z)));
-        HumanoidSpeciesBirths.birth(fighter, HumanoidTier.WANDERING_QI);
+        HumanoidSpeciesBirths.birth(fighter, tier);
         context.assertTrue(level.addFreshEntity(fighter), "拳师未加入世界");
         fighter.setVillagerXp(1);
-        fighter.setVillagerData(fighter.getVillagerData().withProfession(level.registryAccess(), PROFESSION));
+        fighter.setVillagerData(fighter.getVillagerData().withProfession(level.registryAccess(), profession));
         target = EntityTypes.PILLAGER.create(level, EntitySpawnReason.COMMAND);
         place(target, fighter.position().add(0, 0, TARGET_DISTANCE));
         HumanoidSpeciesBirths.birth(target, HumanoidTier.MORTAL);

@@ -26,6 +26,11 @@
 | 卷 | 32×32 卷轴物品图 | 1536×1024 阅读背景 |
 |---|---|---|
 | 上卷「外家」 | `item/outer_scroll.png` | `gui/scroll/outer.png` |
+| 中卷「内家」 | `item/inner_scroll.png` | `gui/scroll/inner.png` |
+
+中卷的卷轴图（2026-11-18）不另出原稿：由上卷的成品换色得到，同一卷纸，捆卷轴的草绳换成靛青布带，
+一眼能看出是同一本书的另一卷。脚本是 [scripts/recolor_inner_scroll.py](../../scripts/recolor_inner_scroll.py)，
+只动卷轴中段的草绳颜色，卷纸和描边不改；上卷的图重做以后重跑它。
 
 四式共用一套边框：近黑褐外圈、草绳金内圈、深褐底。各式靠动作剪影区分。
 

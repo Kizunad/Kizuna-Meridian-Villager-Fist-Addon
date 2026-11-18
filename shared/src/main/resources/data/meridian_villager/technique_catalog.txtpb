@@ -1,6 +1,6 @@
 # 袖手拳功法目录，schema_version 同时标识清单格式。
 # 上卷外家：崩拳、撩天、背摔三式打人，打木桩练两臂耐力。
-# 中卷内家：寸劲、缠腕（十字手做好再放进来）；没有卷轴，只能在武馆学或用命令学。下卷等各自的式做好再加卷。
+# 中卷内家：寸劲、缠腕（十字手做好再放进来）；有卷轴物品但不掉落，生存里只在武馆学。下卷等各自的式做好再加卷。
 schema_version: 1
 namespace: "meridian_villager"
 binding_templates { id: "human:adult" version: 1 }
@@ -33,8 +33,7 @@ volumes {
   techniques { id: "meridian_villager:inch_power" version: 1 }
   techniques { id: "meridian_villager:wrist_lock" version: 1 }
   prerequisite_volume_ids: "meridian_villager:outer"
-  # 中卷只在武馆传（用户 10-31）：不生成卷轴，也就没有掉落。
-  scroll_item: false
+  # 中卷只在武馆传（用户 10-31）：卷轴物品只为创造模式方便拿（用户 11-18），不写 scroll_drops，生存里没有来路。
 }
 
 definitions {
