@@ -3,7 +3,7 @@
 # 中卷内家：寸劲、缠腕（十字手做好再放进来）；有卷轴物品但不掉落，生存里只在武馆学。下卷等各自的式做好再加卷。
 schema_version: 1
 namespace: "meridian_villager"
-binding_templates { id: "human:adult" version: 1 }
+binding_template_groups: "human:humanoid"
 
 books {
   id: "meridian_villager:sleeve_fist"
