@@ -19,6 +19,7 @@ public final class FistXbowGuardGameTest {
     private static final int HOLD_TICKS = 60;
     private static final int HIT_TIMEOUT = 200;
     private static final int CHASE_TIMEOUT_TICKS = 100;
+    private static final int RESIDUAL_VELOCITY_SCENE = 21;
     private static final double NEAR_DISTANCE = 1.9;
     private static final double FOLLOW_DISTANCE = 2.8;
     private static final double APPROACH_DISTANCE = 6;
@@ -36,6 +37,7 @@ public final class FistXbowGuardGameTest {
         var arena = new FistXbowTestArena(context, 1);
         arena.whenReady(() -> {
             try (arena) {
+                arena.target.setNoAi(false /* aiDisabled */);
                 arena.targetAt(NEAR_DISTANCE);
                 arena.fighter.setDeltaMovement(Vec3.ZERO);
                 arena.target.setDeltaMovement(new Vec3(0, 0, ESCAPE_BLOCKS_PER_TICK));
@@ -55,6 +57,25 @@ public final class FistXbowGuardGameTest {
                 context.assertTrue(stationary.strikes().stream().anyMatch(known ->
                         known.getTechnique().getId().equals(FistXbowTestArena.THROW)),
                         "地面重力残余错误过滤了静止目标的背摔候选");
+                context.succeed();
+            }
+        });
+    }
+
+    @GameTest(maxTicks = TIMEOUT)
+    public void xbowGuardTreatsNoAiTargetResidualVelocityAsStationary(GameTestHelper context) {
+        var arena = new FistXbowTestArena(context, RESIDUAL_VELOCITY_SCENE);
+        arena.whenReady(() -> {
+            try (arena) {
+                arena.target.setNoAi(true /* aiDisabled */);
+                arena.targetAt(NEAR_DISTANCE);
+                arena.target.setDeltaMovement(new Vec3(0, 0, ESCAPE_BLOCKS_PER_TICK));
+                var body = HumanoidTechniqueHost.prepare(arena.fighter).body().currentBody();
+                var opponent = new HumanoidOpponent(arena.target, Optional.empty());
+                var readout = HumanoidRepertoires.read(arena.fighter, body, Optional.of(opponent), id -> false);
+                context.assertTrue(readout.strikes().stream().anyMatch(known ->
+                        known.getTechnique().getId().equals(FistXbowTestArena.LONG_STRIKE)),
+                        "不会自主移动的弩手残留速度错误过滤长起手");
                 context.succeed();
             }
         });
